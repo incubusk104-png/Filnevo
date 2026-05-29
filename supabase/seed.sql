@@ -1,0 +1,4 @@
+-- Demo seed for the Caveat Vault dashboard. Requires an auth.users row to exist.
+-- Replace :uid with a real auth user id before running.
+-- insert into public.user_profiles (id, display_name, plan, quota_limit, quota_used)
+--   values (:uid, 'Vault Operator', 'pro', 1000, 412);
