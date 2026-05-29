@@ -5,10 +5,13 @@ import {
   DEMO_QUOTA,
   DEMO_TENANT,
   DEMO_TENANT_ID,
+  DEMO_WORKSPACES,
+  type ApprovalStatus,
   type LedgerEntry,
   type LedgerStatus,
   type TenantSnapshot,
   type VaultMetrics,
+  type Workspace,
 } from "@/lib/vault-data";
 
 export interface VaultData {
@@ -19,6 +22,7 @@ export interface VaultData {
   ledger: LedgerEntry[];
   tenant: TenantSnapshot;
   quota: { used: number; limit: number };
+  workspaces: Workspace[];
 }
 
 const DEMO_DATA: VaultData = {
@@ -29,6 +33,7 @@ const DEMO_DATA: VaultData = {
   ledger: DEMO_LEDGER,
   tenant: DEMO_TENANT,
   quota: DEMO_QUOTA,
+  workspaces: DEMO_WORKSPACES,
 };
 
 interface ProfileRow {
@@ -44,9 +49,17 @@ interface LedgerRow {
   id: string;
   document_name: string;
   status: LedgerStatus;
+  approval_status: ApprovalStatus;
+  workspace_id: string | null;
   latency_ms: number;
   tokens: number;
   created_at: string;
+}
+
+interface WorkspaceRow {
+  id: string;
+  name: string;
+  owner_id: string;
 }
 
 export async function getVaultData(): Promise<VaultData> {
@@ -76,10 +89,25 @@ export async function getVaultData(): Promise<VaultData> {
 
   const { data: ledgerRows } = await supabase
     .from("ai_processing_ledger")
-    .select("id, document_name, status, latency_ms, tokens, created_at")
+    .select(
+      "id, document_name, status, approval_status, workspace_id, latency_ms, tokens, created_at",
+    )
     .order("created_at", { ascending: false })
     .limit(25)
     .returns<LedgerRow[]>();
+
+  const { data: workspaceRows } = await supabase
+    .from("workspaces")
+    .select("id, name, owner_id")
+    .order("created_at", { ascending: true })
+    .returns<WorkspaceRow[]>();
+
+  const workspaces: Workspace[] = (workspaceRows ?? []).map((w) => ({
+    id: w.id,
+    name: w.name,
+    role: w.owner_id === user.id ? "owner" : "member",
+    memberCount: 0,
+  }));
 
   const rows = ledgerRows ?? [];
   const total = rows.length;
@@ -108,6 +136,8 @@ export async function getVaultData(): Promise<VaultData> {
       id: r.id.slice(0, 8).toUpperCase(),
       document: r.document_name,
       status: r.status,
+      approvalStatus: r.approval_status,
+      workspaceId: r.workspace_id,
       latencyMs: r.latency_ms,
       tokens: r.tokens,
       timestamp: new Date(r.created_at).toISOString().slice(0, 19).replace("T", " "),
@@ -117,5 +147,6 @@ export async function getVaultData(): Promise<VaultData> {
       used: profile?.quota_used ?? 0,
       limit: profile?.quota_limit ?? 100,
     },
+    workspaces,
   };
 }
