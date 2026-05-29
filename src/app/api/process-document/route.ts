@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit } from "@/lib/rate-limit";
-import { checkAndIncrementQuota } from "@/lib/quota";
+import { checkAndIncrementQuota, type QuotaResult } from "@/lib/quota";
+import { createClient } from "@/lib/supabase/server";
 
 // LOCK 1 runs at the edge, in front of the database.
 export const runtime = "edge";
@@ -9,6 +10,13 @@ function clientId(req: NextRequest): string {
   const fwd = req.headers.get("x-forwarded-for");
   if (fwd) return fwd.split(",")[0].trim();
   return req.headers.get("x-real-ip") ?? "anonymous";
+}
+
+interface QuotaRpcRow {
+  allowed: boolean;
+  quota_used: number;
+  quota_limit: number;
+  remaining: number;
 }
 
 export async function POST(req: NextRequest) {
@@ -35,22 +43,46 @@ export async function POST(req: NextRequest) {
   } catch {
     // empty body is allowed
   }
-  const tenantId = body.tenantId ?? id;
   const increment = Math.max(1, Number(body.increment ?? 1));
 
   // --- LOCK 2: atomic quota check ------------------------------------------
-  // With Supabase configured this becomes an RPC to check_and_increment_quota
-  // (FOR UPDATE). Here we mirror it in-memory for the demo.
-  const quota = checkAndIncrementQuota(tenantId, increment);
+  let quota: QuotaResult;
+  const supabase = await createClient();
+  if (supabase) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json(
+        { ok: false, lock: 3, error: "unauthenticated" },
+        { status: 401 },
+      );
+    }
+    const { data, error } = await supabase.rpc("check_and_increment_quota", {
+      p_user_id: user.id,
+      p_increment: increment,
+    });
+    if (error) {
+      return NextResponse.json(
+        { ok: false, lock: 2, error: error.message },
+        { status: 500 },
+      );
+    }
+    const row = (data as QuotaRpcRow[] | null)?.[0];
+    quota = {
+      allowed: row?.allowed ?? false,
+      quotaUsed: row?.quota_used ?? 0,
+      quotaLimit: row?.quota_limit ?? 0,
+      remaining: row?.remaining ?? 0,
+    };
+  } else {
+    // Demo: in-memory mirror of the PL/pgSQL function.
+    quota = checkAndIncrementQuota(body.tenantId ?? id, increment);
+  }
+
   if (!quota.allowed) {
     return NextResponse.json(
-      {
-        ok: false,
-        lock: 2,
-        error: "quota_exceeded",
-        quota,
-        alarm: "ruby",
-      },
+      { ok: false, lock: 2, error: "quota_exceeded", quota, alarm: "ruby" },
       {
         status: 402,
         headers: { "X-RateLimit-Remaining": String(rl.remaining) },
