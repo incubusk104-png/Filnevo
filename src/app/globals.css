@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   CAVEAT VAULT — "CLASSIFIED-DOCUMENT DARK" DESIGN SYSTEM
+   Obsidian base + Brass-Gold (L1), Sapphire (L2), Emerald (L3) accents.
+   ========================================================================== */
+:root {
+  /* Obsidian base ramp */
+  --obsidian: #080d11;
+  --obsidian-700: #0c141b;
+  --obsidian-600: #111c25;
+  --obsidian-500: #16242f;
+  --hairline: #1d2d39;
+
+  --ink: #e7eef2;
+  --ink-dim: #8aa0ad;
+  --ink-faint: #51626d;
+
+  /* Accents */
+  --gold: #c8a04a; /* L1 — Brass-Gold */
+  --gold-soft: #e3c884;
+  --sapphire: #3b82f6; /* L2 */
+  --emerald: #10b981; /* L3 */
+  --amber: #f59e0b; /* quota warning */
+  --ruby: #ef4444; /* lock breach / alarm */
+
+  --background: var(--obsidian);
+  --foreground: var(--ink);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-obsidian: var(--obsidian);
+  --color-obsidian-700: var(--obsidian-700);
+  --color-obsidian-600: var(--obsidian-600);
+  --color-obsidian-500: var(--obsidian-500);
+  --color-hairline: var(--hairline);
+
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-ink-faint: var(--ink-faint);
+
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-sapphire: var(--sapphire);
+  --color-emerald: var(--emerald);
+  --color-amber: var(--amber);
+  --color-ruby: var(--ruby);
+
+  --font-serif: var(--font-dm-serif);
+  --font-mono: var(--font-ibm-plex-mono);
+  --font-nav: var(--font-syne);
+  --font-sans: var(--font-syne);
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(59, 130, 246, 0.07), transparent 60%),
+    radial-gradient(900px 500px at 0% 0%, rgba(200, 160, 74, 0.06), transparent 55%),
+    var(--obsidian);
+  color: var(--ink);
+  font-family: var(--font-syne), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.01em;
+}
+
+/* Hairline grid texture reminiscent of a classified ledger sheet */
+.vault-grid {
+  background-image:
+    linear-gradient(to right, rgba(29, 45, 57, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(29, 45, 57, 0.35) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+@layer utilities {
+  .font-serif-display {
+    font-family: var(--font-dm-serif), Georgia, serif;
+  }
+  .font-ledger {
+    font-family: var(--font-ibm-plex-mono), ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .font-nav {
+    font-family: var(--font-syne), ui-sans-serif, system-ui, sans-serif;
+  }
+  .text-glow-gold {
+    text-shadow: 0 0 18px rgba(200, 160, 74, 0.45);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--obsidian-500);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes ruby-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 26px 4px rgba(239, 68, 68, 0.35);
+  }
+}
+.animate-ruby {
+  animation: ruby-pulse 1.1s ease-in-out infinite;
+}
