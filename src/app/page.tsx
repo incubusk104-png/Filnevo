@@ -1,17 +1,26 @@
-import { VaultDashboard } from "@/components/vault/VaultDashboard";
-import { getVaultData } from "@/lib/vault-queries";
+"use client"
 
-export default async function Home() {
-  const data = await getVaultData();
+import { AgentChat, createAgentChat } from "@21st-sdk/nextjs"
+import { useChat } from "@ai-sdk/react"
+
+const chat = createAgentChat({
+  agent: "my-agent",
+  tokenUrl: "/api/an-token",
+})
+
+export default function Page() {
+  const { messages, input, handleInputChange, handleSubmit, status, stop, error } =
+    useChat({ chat })
+
   return (
-    <VaultDashboard
-      metrics={data.metrics}
-      ledger={data.ledger}
-      tenant={data.tenant}
-      quota={data.quota}
-      tenantId={data.tenantId}
-      email={data.email}
-      live={data.live}
+    <AgentChat
+      messages={messages}
+      onSend={handleSubmit}
+      status={status}
+      onStop={stop}
+      error={error ?? undefined}
+      input={input}
+      onInputChange={handleInputChange}
     />
-  );
+  )
 }
