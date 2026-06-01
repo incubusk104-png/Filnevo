@@ -270,8 +270,8 @@ export default function PricingSection() {
             Ready to accelerate your service delivery?
           </h3>
           <p className="text-text-muted max-w-2xl mx-auto mb-8">
-            Start with a free trial or contact us to discuss a custom solution
-            tailored to your specific service acceleration needs.
+            Start optimizing your services today with our precision-engineered
+            platform designed for maximum speed and efficiency.
           </p>
           <div className="flex flex-col sm:flex-row sm:justify-center gap-4 sm:gap-6">
             <Button variant="outline" href="#features">
@@ -282,6 +282,7 @@ export default function PricingSection() {
             </Button>
           </div>
         </div>
-      </section>
-    );
+      </div>
+    </section>
+  );
 }
