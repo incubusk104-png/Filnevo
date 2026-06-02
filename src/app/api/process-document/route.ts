@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { rateLimit } from "@/lib/rate-limit";
+import { createRateLimiter } from "@/lib/mocking/factories";
 import { checkAndIncrementQuota, type QuotaResult } from "@/lib/quota";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,7 +22,7 @@ interface QuotaRpcRow {
 export async function POST(req: NextRequest) {
   // --- LOCK 1: Edge rate limiter -------------------------------------------
   const id = clientId(req);
-  const rl = rateLimit(id);
+  const rl = createRateLimiter(id);
   if (!rl.allowed) {
     return NextResponse.json(
       { ok: false, lock: 1, error: "rate_limited", retryAfterMs: rl.resetMs },
