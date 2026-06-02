@@ -9,7 +9,10 @@ pnpm-debug.log*
 .next/
 out/
 .cache/
-.vercel
+.vercel/
+
+# Cloudflare
+.wrangler/
 
 # Environment variables
 .env
