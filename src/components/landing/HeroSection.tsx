@@ -1,4 +1,6 @@
 import { Button } from "@/components/shared/Button";
+import AnimatedCounter from "@/components/landing/AnimatedCounter";
+import LiveTicker from "@/components/landing/LiveTicker";
 
 export default function HeroSection() {
   return (
@@ -59,7 +61,7 @@ export default function HeroSection() {
               </div>
             </div>
             <h3 className="font-metrics text-3xl text-velocity-blue font-bold">
-              10K+
+              <AnimatedCounter value={10} suffix="K+" />
             </h3>
             <p className="mt-2 text-text-muted text-sm">
               Services Accelerated
@@ -84,7 +86,7 @@ export default function HeroSection() {
               </div>
             </div>
             <h3 className="font-metrics text-3xl text-insight-cyan font-bold">
-              250K+
+              <AnimatedCounter value={250} suffix="K+" />
             </h3>
             <p className="mt-2 text-text-muted text-sm">
               Hours Saved Monthly
@@ -101,7 +103,7 @@ export default function HeroSection() {
               </div>
             </div>
             <h3 className="font-metrics text-3xl text-efficiency-green font-bold">
-              3x
+              <AnimatedCounter value={3} suffix="x" />
             </h3>
             <p className="mt-2 text-text-muted text-sm">
               Average Efficiency Gain
@@ -119,7 +121,7 @@ export default function HeroSection() {
               </div>
             </div>
             <h3 className="font-metrics text-3xl text-warning-amber font-bold">
-              99.9%
+              <AnimatedCounter value={99.9} decimals={1} suffix="%" />
             </h3>
             <p className="mt-2 text-text-muted text-sm">
               Platform Uptime
@@ -138,16 +140,7 @@ export default function HeroSection() {
         </div>
 
         {/* Live Data Ticker (subtle motion indicator) */}
-        <div className="mt-16 flex items-center justify-center space-x-6 text-text-muted">
-          <div className="flex items-center space-x-2 animate-metric-pulse">
-            <div className="w-2 h-2 bg-velocity-blue rounded-full" />
-            <span className="text-xs font-metrics">Live: Processing 1,247 requests/sec</span>
-          </div>
-          <div className="w-1 h-[20px] bg-neutral-700/30" />
-          <div className="flex items-center space-x-2">
-            <span className="text-xs">Last optimized: 2m 14s ago</span>
-          </div>
-        </div>
+        <LiveTicker />
       </div>
       </section>
   );
