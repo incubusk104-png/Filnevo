@@ -70,6 +70,11 @@
   --color-warning-amber: var(--warning-amber);
   --color-alert-red: var(--alert-red);
 
+  /* Inputs + surfaces */
+  --color-hairline: var(--hairline);
+  --color-input-bg: var(--input-bg);
+  --color-input-border: var(--input-border);
+
   /* Chart colors */
   --color-chart-bg: var(--chart-bg);
   --color-chart-grid: var(--chart-grid);
@@ -126,7 +131,7 @@ body {
 }
 .data-table td {
   @apply text-neutral-100 py-4 border-b border-neutral-800/30
-         font-metrics font-tabular-nums;
+         font-metrics tabular-nums;
 }
 .data-table tr:hover td {
   @apply bg-neutral-800/20;
@@ -211,25 +216,25 @@ html {
 .btn-primary {
   @apply inline-flex items-center justify-center rounded-md border border-transparent
          bg-velocity-blue px-6 py-3 text-sm font-medium text-neutral-50
-         shadow-sm hover:bg-velocity-blue/90 focus-visible:focus-ring
+         shadow-sm hover:bg-velocity-blue/90 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-velocity-blue/50
          focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none
-         transition-all duration-200 press-effect;
+         transition-all duration-200 active:scale-[0.98];
 }
 
 .btn-outline {
   @apply inline-flex items-center justify-center rounded-md border border-neutral-700
          bg-transparent px-6 py-3 text-sm font-medium text-neutral-100
-         hover:bg-neutral-800/30 hover:border-neutral-600 focus-visible:focus-ring
+         hover:bg-neutral-800/30 hover:border-neutral-600 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-velocity-blue/50
          focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none
-         transition-all duration-200 press-effect;
+         transition-all duration-200 active:scale-[0.98];
 }
 
 .btn-secondary {
   @apply inline-flex items-center justify-center rounded-md border border-transparent
          bg-insight-cyan px-6 py-3 text-sm font-medium text-neutral-50
-         shadow-sm hover:bg-insight-cyan/90 focus-visible:focus-ring
+         shadow-sm hover:bg-insight-cyan/90 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-velocity-blue/50
          focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none
-         transition-all duration-200 press-effect;
+         transition-all duration-200 active:scale-[0.98];
 }
 
 /* Badge styles for status indicators */
@@ -257,21 +262,21 @@ html {
 
 /* Form elements */
 .form-input {
-  @apply block w-full rounded-md bg-input-bg border input-border px-4 py-3
+  @apply block w-full rounded-md bg-input-bg border border-input-border px-4 py-3
          text-neutral-100 placeholder-neutral-400 focus:border-insight-cyan
          focus:ring-2 focus:ring-inset focus:ring-insight-cyan/50
          focus:bg-neutral-900 sm:text-base;
 }
 
 .form-select {
-  @apply block w-full rounded-md bg-input-bg border input-border px-4 py-3
+  @apply block w-full rounded-md bg-input-bg border border-input-border px-4 py-3
          text-neutral-100 placeholder-neutral-400 focus:border-insight-cyan
          focus:ring-2 focus:ring-inset focus:ring-insight-cyan/50
          focus:bg-neutral-900 sm:text-base;
 }
 
 .form-textarea {
-  @apply block w-full rounded-md bg-input-bg border input-border px-4 py-3
+  @apply block w-full rounded-md bg-input-bg border border-input-border px-4 py-3
          text-neutral-100 placeholder-neutral-400 focus:border-insight-cyan
          focus:ring-2 focus:ring-inset focus:ring-insight-cyan/50
          focus:bg-neutral-900 sm:text-base resize-y;
