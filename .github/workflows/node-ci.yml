@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [ "devin/1780026774-caveat-vault" ]
+  pull_request:
+    branches: [ "devin/1780026774-caveat-vault" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+        cache: "npm"
+    - name: Install dependencies
+      run: npm ci
+    - name: Build (Next.js — also type-checks)
+      run: npm run build
