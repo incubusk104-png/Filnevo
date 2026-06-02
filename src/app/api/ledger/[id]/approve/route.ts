@@ -4,7 +4,7 @@ import { createMockSupabaseClient as createClient } from "@/mock/lib/supabase/se
 export const runtime = "edge";
 
 // POST /api/ledger/[id]/approve -> update approval status of a ledger entry
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
   if (!supabase) {
     return NextResponse.json({ ok: false, error: "supabase_unavailable" }, { status: 500 });
@@ -17,12 +17,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ ok: false, error: "unauthenticated" }, { status: 401 });
   }
 
-  const ledgerId = params.id;
+  const { id: ledgerId } = await params;
   if (!ledgerId) {
     return NextResponse.json({ ok: false, error: "ledger_id_required" }, { status: 400 });
   }
 
-  let body: { approval_status: "pending" | "approved" | "rejected" } = {};
+  let body: { approval_status?: "pending" | "approved" | "rejected" } = {};
   try {
     body = await req.json();
   } catch {

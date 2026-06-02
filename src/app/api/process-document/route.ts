@@ -71,8 +71,8 @@ export async function POST(req: NextRequest) {
     const row = (data as QuotaRpcRow[] | null)?.[0];
     quota = {
       allowed: row?.allowed ?? false,
-      quotaUsed: row?.quota_used ?? 0,
-      quotaLimit: row?.quota_limit ?? 0,
+      used: row?.quota_used ?? 0,
+      limit: row?.quota_limit ?? 0,
       remaining: row?.remaining ?? 0,
     };
   } else {

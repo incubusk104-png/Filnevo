@@ -137,7 +137,7 @@ ${ledgerEntries
     });
 
     // Set headers for file download
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type": "application/zip",
         "Content-Disposition": `attachment; filename="caveat-vault-audit-${new Date()

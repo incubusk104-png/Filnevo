@@ -18,7 +18,7 @@ export const Button = forwardRef<
   className = "",
   ...props
 }, ref) => {
-  const Component = href || asChild ? "a" : "button";
+  const Component = (href || asChild ? "a" : "button") as React.ElementType;
 
   const baseClasses = "inline-flex items-center justify-center gap-2 rounded-md font-metrics font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
 
@@ -46,6 +46,7 @@ export const Button = forwardRef<
   return (
     <Component
       ref={ref}
+      href={href}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       {...props}
     >
