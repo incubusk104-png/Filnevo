@@ -37,6 +37,14 @@ export async function POST(req: NextRequest) {
     assigned_model?: string;
   };
 
+  // Declare body in outer scope so it's accessible after try/catch
+  let body: {
+    tenantId?: string;
+    increment?: number;
+    documentName?: string;
+    workspaceId?: string;
+  } = {};
+
   try {
     const supabase = await createSupabaseClientFactory();
     const {
@@ -51,13 +59,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Extract workspace_id from request if provided (for Agency Core features)
-    let body: {
-      tenantId?: string;
-      increment?: number;
-      documentName?: string;
-      workspaceId?: string;
-    } = {};
-
+    // (body already declared above)
     try {
       body = await req.json();
     } catch {
@@ -97,7 +99,6 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Unexpected error in quota check:", error);
     // Fallback to demo mode if Supabase is unavailable
-    const fallbackId = body.tenantId ?? id;
     // This would normally use a mock quota function, but we'll keep it simple
     quota = {
       allowed: true,
@@ -131,21 +132,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  return NextResponse.json(
-    {
-      ok: true,
-      documentName: body.documentName ?? null,
-      quota,
-      // Include the assigned provider/model for transparency
-      ...(quota.assigned_provider && { assignedProvider: quota.assigned_provider }),
-      ...(quota.assigned_model && { assignedModel: quota.assigned_model })
-    },
-    {
-      headers: {
-        "X-RateLimit-Remaining": String(quota.remaining ?? 0),
-        ...(quota.assigned_provider && { "X-Assigned-Provider": quota.assigned_provider }),
-        ...(quota.assigned_model && { "X-Assigned-Model": quota.assigned_model })
-      }
+  return NextResponse.json({
+    ok: true,
+    documentName: (body && body.documentName) ?? null,
+    quota,
+    // Include the assigned provider/model for transparency
+    ...(quota.assigned_provider && { assignedProvider: quota.assigned_provider }),
+    ...(quota.assigned_model && { assignedModel: quota.assigned_model })
+  }, {
+    headers: {
+      "X-RateLimit-Remaining": String(quota.remaining ?? 0),
+      ...(quota.assigned_provider && { "X-Assigned-Provider": quota.assigned_provider }),
+      ...(quota.assigned_model && { "X-Assigned-Model": quota.assigned_model })
     }
-  );
+  });
 }

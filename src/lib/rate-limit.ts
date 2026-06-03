@@ -1,6 +1,6 @@
 // Secure rate limit implementation for Edge Runtime with IP tracking and payload limits
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/request';
+import type { NextRequest } from 'next/server';
 
 // In-memory cache to manage rapid rate limiting at the network edge
 // Note: In production, you might want to use Redis or another shared store
@@ -11,7 +11,7 @@ const trackIpCache = new Map<string, { count: number; resetTime: number }>();
  * Provides rate limiting and payload size protection
  */
 export async function middleware(req: NextRequest) {
-  const ip = req.ip || req.headers.get('x-forwarded-for') || 'anonymous';
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'anonymous';
   const currentTime = Date.now();
 
   // 1. Defend Against Payload Volumetric Attacks
@@ -86,9 +86,8 @@ export const rateLimit = () => {
  * This extracts a stable identifier from the request
  */
 export const clientId = (req: NextRequest): string => {
-  // Try to get user ID from auth headers or cookies if available
+  // Try to get user ID from auth headers
   const userId = req.headers.get('x-user-id') ||
-                req.cookies.get('user-id')?.value ||
                 req.headers.get('x-auth-user-id');
 
   if (userId) {
@@ -96,6 +95,6 @@ export const clientId = (req: NextRequest): string => {
   }
 
   // Fallback to IP-based identification
-  const ip = req.ip || req.headers.get('x-forwarded-for') || 'anonymous';
+  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'anonymous';
   return `ip:${ip}`;
 };

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseClientFactory } from "@/lib/mocking/factories";
 
+export const runtime = "edge";
+
 // GET /api/quota?tenantId=... -> current quota snapshot (Lock 2 peek).
 export async function GET(req: NextRequest) {
   const supabase = await createSupabaseClientFactory();
