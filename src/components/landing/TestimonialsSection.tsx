@@ -1,3 +1,5 @@
+import { Button } from "@/components/shared/Button";
+
 export default function TestimonialsSection() {
   return (
     <section className="relative py-20 lg:py-24 overflow-hidden">
@@ -206,6 +208,7 @@ export default function TestimonialsSection() {
             </Button>
           </div>
         </div>
+      </div>
       </section>
     );
-};
+}

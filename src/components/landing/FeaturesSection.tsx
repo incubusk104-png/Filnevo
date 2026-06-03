@@ -213,6 +213,7 @@ export default function FeaturesSection() {
             </Button>
           </div>
         </div>
+      </div>
       </section>
     );
-};
+}

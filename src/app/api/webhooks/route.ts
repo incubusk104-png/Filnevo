@@ -4,15 +4,21 @@ import { createSupabaseClientFactory } from "@/lib/mocking/factories";
 // Crypto is not available in Edge Runtime - using a simple alternative for demonstration
 // In production, you would use Web Crypto API or a different approach
 const crypto = {
-  createHmac: (algorithm: string, key: string) => ({
-    update: (data: string) => ({
+  createHmac: (algorithm: string, key: string) => {
+    let buffered = "";
+    const hmac = {
+      update: (data: string) => {
+        buffered += data;
+        return hmac;
+      },
       digest: (encoding: string) => {
         // Simple mock HMAC implementation for demonstration
         // In real implementation, use Web Crypto API
-        return btoa(`${key}:${data}`).substring(0, 32);
-      }
-    })
-  }),
+        return btoa(`${key}:${buffered}`).substring(0, 32);
+      },
+    };
+    return hmac;
+  },
   timingSafeEqual: (a: Buffer, b: Buffer) => {
     // Simple timing-safe comparison mock
     return a.toString() === b.toString();

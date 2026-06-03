@@ -1,5 +1,5 @@
 // Mock quota implementation for Edge Runtime compatibility
-type QuotaResult = {
+export type QuotaResult = {
   allowed: boolean;
   used: number;
   limit: number;

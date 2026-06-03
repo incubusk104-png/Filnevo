@@ -148,6 +148,7 @@ export default function HeroSection() {
             <span className="text-xs">Last optimized: 2m 14s ago</span>
           </div>
         </div>
+      </div>
       </section>
   );
 }

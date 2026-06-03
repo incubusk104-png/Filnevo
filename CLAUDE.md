@@ -1,64 +1,71 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Project Overview
-
-This is a simple Python project with a single entry point (`main.py`) that prints a greeting. The project uses UV for dependency management and targets Python 3.14+.
-
-## Key Files
-
-- `main.py`: Contains the main application logic
-- `pyproject.toml`: Project configuration and dependencies (currently includes `requests>=2.34.2`)
-- `uv.lock`: Lock file for reproducible dependencies
-- `.python-version`: Specifies Python version 3.14
-- `README.md`: Project documentation (currently minimal)
-
 ## Development Commands
 
-### Setup
-```bash
-# Install dependencies using UV
-uv sync
+- **Start development server**: `npm run dev` (or `pnpm dev`, `yarn dev`, `bun dev`)
+- **Build for production**: `npm run build`
+- **Start production server**: `npm run start`
+- **Lint code**: `npm run lint` (uses ESLint with Next.js config)
+- **Format code**: Prettier is not configured; run `npx prettier --write .` if needed
+- **Type checking**: `npx tsc --noEmit` (TypeScript is used; check via build step)
+- **Run MCP server**: `python mcp_webdev_server.py` (provides tools for running npm scripts and checking project status)
 
-# Alternatively, install in development mode
-uv pip install -e .
-```
+## Project Structure
 
-### Running the Application
-```bash
-# Run directly with Python
-python main.py
+- `src/app`: Next.js App Router pages and route handlers
+  - `src/app/page.tsx`: Home page with AI chat interface
+  - `src/app/layout.tsx`: Root layout with custom fonts and metadata
+  - `src/app/login/`: Login page and form components
+  - `src/app/api/`: API routes (Supabase auth, quota, document processing, agent token)
+- `src/components`: Reusable UI components (vault dashboard, cards, etc.)
+- `src/lib`: Utility modules
+  - `src/lib/supabase`: Supabase client, server, and middleware helpers
+  - `src/lib/quota.ts`: Quota checking logic
+  - `src/lib/rate-limit.ts`: Rate limiting implementation
+  - `src/lib/vault-data.ts` & `vault-queries.ts`: Data fetching and Supabase queries
+  - `src/lib/utils.ts`: General helper functions
+- `src/proxy.ts`: Edge gateway for Lock 1 (Next.js 16) blocks non-compliant traffic + guards routes
+- `mcp_webdev_server.py`: MCP Server for Web Development Tasks
+- `public`: Static assets (favicon, etc.)
+- `.env.example`: Template for Supabase environment variables
 
-# Or using UV
-uv run main.py
-```
+## Key Technologies
 
-### Testing
-Currently, no tests are configured. To add tests:
-1. Create a `tests/` directory
-2. Add test files (e.g., `test_main.py`)
-3. Install a test framework (e.g., `pytest`) via `uv add --dev pytest`
-4. Run tests with `uv run pytest`
+- **Framework**: Next.js 16 (App Router, React 19)
+- **Styling**: Tailwind CSS v4 with custom `@tailwindcss/postcss` setup
+- **Authentication**: Supabase Auth (via `@supabase/ssr` and `@supabase/supabase-js`)
+- **AI Integration**: 
+  - `@21st-sdk/agent` and `@21st-sdk/nextjs` for agent chat
+  - `@ai-sdk/react` and `ai` for AI SDK utilities
+- **Database**: Supabase (PostgREST) – queries in `src/lib/vault-queries.ts`
+- **TypeScript**: Strict configuration in `tsconfig.json`
+- **Linting**: ESLint with `eslint-config-next`
+- **MCP**: Model Context Protocol server (`mcp_webdev_server.py`) for web development tools
 
-### Linting/Formatting
-No linting tools are configured by default. To add:
-1. Install a linter (e.g., `ruff` or `flake8`) via `uv add --dev ruff`
-2. Configure in `pyproject.toml` or separate config file
-3. Run with `uv run ruff check .` (for ruff)
+## Common Tasks
 
-## Architecture Notes
+- **Adding a new page**: Create a folder under `src/app` with `page.tsx` (and optionally `loading.tsx`, `error.tsx`)
+- **Creating an API route**: Add `route.ts` inside `src/app/api/<name>/`
+- **Accessing Supabase**: Use `src/lib/supabase/server.ts` for server-side calls; `client.ts` for client-side (if needed)
+- **Running MCP tools**: Use the MCP server to run npm scripts, list files, get package info, or check ports
+- **Updating Tailwind config**: Edit `tailwind.config.ts` (not present; Tailwind v4 uses `globals.css` and postcss)
+- **Environment variables**: Copy `.env.example` to `.env.local` and fill in Supabase URL/anon key, etc.
 
-This is a minimal single-file application:
-- Entry point: `main.py` contains a `main()` function that prints a message
-- The `if __name__ == "__main__":` block ensures the script runs directly
-- Dependencies are managed via UV and declared in `pyproject.toml`
-- The project structure is intentionally simple for demonstration purposes
+## Project Status (from agent.md)
 
-## Extending the Project
+- **PHASE 1: INFRASTRUCTURE (SQL SCHEMA & RLS)** - STATUS: DONE
+- **PHASE 2: DESIGN SYSTEM (OBSIDIAN LEDGER)** - STATUS: DONE
+- **PHASE 3: BENTO GRID DASHBOARD** - STATUS: DONE
+- **PHASE 4: INTERACTION & BACKEND SYNC** - STATUS: DONE
+- **AUTH: Supabase auth + live data wiring** - STATUS: DONE
+- **PHASE A1: WORKSPACES + WORKSPACE-AWARE RLS + TIERED QUOTA** - STATUS: DONE
+- **PHASE A2: /api/workspaces, APPROVALS, AUDIT ZIP, /api/webhooks** - STATUS: DONE
+- **PHASE A3: 21st.dev UI (BENTO + WORKSPACE SWITCHER + APPROVAL QUEUE)** - STATUS: DONE
 
-When adding features:
-1. Consider separating concerns into multiple modules if the project grows
-2. Add tests for new functionality
-3. Update dependencies in `pyproject.toml` as needed
-4. Keep the entry point in `main.py` or consolidate in a dedicated module
+## Notes
+
+- This project uses a custom agent chat UI (`AgentChat` from `@21st-sdk/nextjs`) – see `src/app/page.tsx`
+- Authentication flows are in `src/app/login/`; protected routes rely on Supabase middleware (`src/lib/supabase/middleware.ts`)
+- Before writing code, review `AGENTS.md` for important Next.js version‑specific caveats
+- UI components are sourced via 21st.dev (magic MCP) as noted in agent.md
+- The MCP server (`mcp_webdev_server.py`) provides tools for running npm scripts, list files, get package info, or check ports
+- When `NEXT_PUBLIC_SUPABASE_*` are unset, the console runs in DEMO mode (simulated data, no auth gate)
+- When set, enforces auth + live data via RLS (Row Level Security)

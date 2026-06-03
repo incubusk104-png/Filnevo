@@ -1,5 +1,7 @@
 import { createTokenHandler } from "@/mock/@21st-sdk/nextjs/server"
 
-export const POST = createTokenHandler({
+export const runtime = "edge";
+
+export const { POST } = createTokenHandler({
   apiKey: process.env.API_KEY_21ST!,
 })
