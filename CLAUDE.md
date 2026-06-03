@@ -1,7 +1,3 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Development Commands
 
 - **Start development server**: `npm run dev` (or `pnpm dev`, `yarn dev`, `bun dev`)
@@ -70,6 +66,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Authentication flows are in `src/app/login/`; protected routes rely on Supabase middleware (`src/lib/supabase/middleware.ts`)
 - Before writing code, review `AGENTS.md` for important Next.js version‑specific caveats
 - UI components are sourced via 21st.dev (magic MCP) as noted in agent.md
-- The MCP server (`mcp_webdev_server.py`) provides tools for running npm scripts and checking project status
+- The MCP server (`mcp_webdev_server.py`) provides tools for running npm scripts, list files, get package info, or check ports
 - When `NEXT_PUBLIC_SUPABASE_*` are unset, the console runs in DEMO mode (simulated data, no auth gate)
 - When set, enforces auth + live data via RLS (Row Level Security)

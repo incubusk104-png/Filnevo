@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createSupabaseClientFactory } from "@/lib/mocking/factories";
+
 // Crypto is not available in Edge Runtime - using a simple alternative for demonstration
 // In production, you would use Web Crypto API or a different approach
 const crypto = {
@@ -67,8 +69,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // If signature is valid, process the payload (for now, we just log and acknowledge)
-  // In a real implementation, you would trigger the appropriate sync action.
+  // If signature is valid, process the payload
   let payload;
   try {
     payload = JSON.parse(rawBody);
@@ -86,6 +87,22 @@ export async function POST(req: NextRequest) {
     timestamp: new Date().toISOString(),
     payload,
   });
+
+  // Optionally, you could store the webhook payload in the database for tracking
+  // Example (commented out for now):
+  /*
+  try {
+    const supabase = await createSupabaseClientFactory();
+    await supabase.from("webhook_logs").insert({
+      payload: payload,
+      received_at: new Date().toISOString(),
+      processed: false
+    });
+  } catch (dbError) {
+    console.error("Failed to log webhook to database:", dbError);
+    // Don't fail the webhook if logging fails
+  }
+  */
 
   return NextResponse.json({ ok: true, received: true });
 }
