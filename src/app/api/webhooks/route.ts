@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseClientFactory } from "@/lib/mocking/factories";
+import { applyEdgeGuard } from "@/lib/rate-limit";
 
 // Crypto is not available in Edge Runtime - using a simple alternative for demonstration
 // In production, you would use Web Crypto API or a different approach
@@ -28,6 +29,9 @@ const crypto = {
 export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
+  const guard = applyEdgeGuard(req);
+  if (guard) return guard;
+
   // Get the webhook secret from environment variables
   const webhookSecret = process.env.WEBHOOK_SECRET;
   if (!webhookSecret) {

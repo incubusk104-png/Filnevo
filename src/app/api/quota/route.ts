@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseClientFactory } from "@/lib/mocking/factories";
+import { applyEdgeGuard } from "@/lib/rate-limit";
 
 // Required by @cloudflare/next-on-pages: every non-static route must run on the
 // Edge Runtime, matching the other /api routes.
@@ -7,6 +8,9 @@ export const runtime = "edge";
 
 // GET /api/quota?tenantId=... -> current quota snapshot (Lock 2 peek).
 export async function GET(req: NextRequest) {
+  const guard = applyEdgeGuard(req);
+  if (guard) return guard;
+
   const supabase = await createSupabaseClientFactory();
   if (!supabase) {
     // Fallback to demo mode
@@ -55,6 +59,9 @@ export async function GET(req: NextRequest) {
 
 // POST /api/quota -> simulate a usage level (slider) and re-evaluate Lock 2.
 export async function POST(req: NextRequest) {
+  const guard = applyEdgeGuard(req);
+  if (guard) return guard;
+
   const supabase = await createSupabaseClientFactory();
   if (!supabase) {
     // Fallback to demo mode

@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createMockSupabaseClient as createClient } from "@/mock/lib/supabase/server";
+import { applyEdgeGuard } from "@/lib/rate-limit";
 
 export const runtime = "edge";
 
 // POST /api/ledger/[id]/approve -> update approval status of a ledger entry
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const guard = applyEdgeGuard(req);
+  if (guard) return guard;
+
   const supabase = await createClient();
   if (!supabase) {
     return NextResponse.json({ ok: false, error: "supabase_unavailable" }, { status: 500 });

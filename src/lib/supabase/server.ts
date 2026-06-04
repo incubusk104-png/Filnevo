@@ -77,7 +77,12 @@ export const createMockSupabaseClient = (): MockSupabaseClient => {
       signInWithOAuth: async () => ({ data: { url: null }, error: null }),
       exchangeCodeForSession: async () => ({ data: { session: null }, error: null }),
       signOut: async () => ({ error: null }),
-      getUser: async () => ({ data: { user: null }, error: null }),
+      // Demo mode has no real session; surface a stable demo user so
+      // authenticated API routes return demo data instead of 401.
+      getUser: async () => ({
+        data: { user: { id: "demo-user", email: "demo@filnevo.com" } },
+        error: null,
+      }),
     },
     from: () => createQueryBuilder(),
     rpc: async () => ({ data: null, error: null }),

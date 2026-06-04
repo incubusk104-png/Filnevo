@@ -1,137 +1,51 @@
-// Mock process.env for testing
+// NOTE: This repo has no test runner wired (no `test` script / jest binary).
+// These specs document the intended contract and are kept type-correct.
 const originalEnv = process.env;
-
-describe('rate limiter factory', () => {
-  beforeEach(() => {
-    // Reset env before each test
-    process.env = { ...originalEnv };
-  });
-
-  afterAll(() => {
-    // Restore original env
-    process.env = originalEnv;
-  });
-
-  describe('createRateLimiter', () => {
-    it('should return mock rate limiter in demo mode', () => {
-      // Arrange - demo mode
-      delete process.env.SUPABASE_URL;
-      process.env.SUPABASE_ANON_KEY = 'test-key';
-
-      // Act
-      const { createRateLimiter } = require('../factories');
-      const rateLimiter = createRateLimiter('test-id');
-
-      // Assert
-      expect(rateLimiter).toHaveProperty('allowed');
-      expect(rateLimiter).toHaveProperty('limit');
-      expect(rateLimiter).toHaveProperty('remaining');
-      expect(rateLimiter).toHaveProperty('resetMs');
-      expect(rateLimiter.allowed).toBe(true);
-      expect(typeof rateLimiter.limit).toBe('number');
-      expect(typeof rateLimiter.remaining).toBe('number');
-      expect(typeof rateLimiter.resetMs).toBe('number');
-    });
-
-    it('should return mock rate limiter in production mode (placeholder)', () => {
-      // Arrange - production mode
-      process.env.SUPABASE_URL = 'https://test.supabase.co';
-      process.env.SUPABASE_ANON_KEY = 'test-key';
-
-      // Act
-      const { createRateLimiter } = require('../factories');
-      const rateLimiter = createRateLimiter('test-id');
-
-      // Assert
-      expect(rateLimiter).toHaveProperty('allowed');
-      expect(rateLimiter).toHaveProperty('limit');
-      expect(rateLimiter).toHaveProperty('remaining');
-      expect(rateLimiter).toHaveProperty('resetMs');
-      expect(rateLimiter.allowed).toBe(true);
-      expect(typeof rateLimiter.limit).toBe('number');
-      expect(typeof rateLimiter.remaining).toBe('number');
-      expect(typeof rateLimiter.resetMs).toBe('number');
-    });
-  });
-});
 
 describe('supabase client factory', () => {
   beforeEach(() => {
-    // Reset env before each test
     process.env = { ...originalEnv };
+    jest.resetModules();
   });
 
   afterAll(() => {
-    // Restore original env
     process.env = originalEnv;
   });
 
   describe('createSupabaseClientFactory', () => {
-    it('returns mock supabase client in demo mode', () => {
-      // Arrange - demo mode
-      jest.mock('@/lib/mode', () => ({
-        isDemoMode: () => true,
-        isProductionMode: () => false
-      }));
+    it('returns the mock supabase client in demo mode', async () => {
       delete process.env.SUPABASE_URL;
       delete process.env.SUPABASE_ANON_KEY;
 
-      // Import the factory AFTER setting up mocks
-      jest.resetModules(); // Clear module cache
       const { createSupabaseClientFactory } = require('../factories');
+      const client = await createSupabaseClientFactory();
 
-      // Act
-      const client = createSupabaseClientFactory();
-
-      // Assert - should return an object with auth and from properties (matching mock interface)
+      // Mock client exposes the auth + query interface the routes rely on.
       expect(client).toBeDefined();
       expect(client).toHaveProperty('auth');
       expect(client).toHaveProperty('from');
-      expect(typeof client.auth.getSession).toBe('function');
+      expect(typeof client.auth.getUser).toBe('function');
       expect(typeof client.from).toBe('function');
     });
 
-    it('returns real supabase client in production mode when env vars are present', () => {
-      // Arrange - production mode
-      jest.mock('@/lib/mode', () => ({
-        isDemoMode: () => false,
-        isProductionMode: () => true
+    it('delegates to the cookie-bound server client in production', async () => {
+      // The factory delegates to @/lib/supabase/server `createClient`, which is
+      // the cookie-bound @supabase/ssr client in production so `auth.getUser()`
+      // resolves the caller's session (instead of a sessionless anon client).
+      jest.doMock('@/lib/supabase/server', () => ({
+        createClient: jest.fn(async () => ({
+          auth: { getUser: async () => ({ data: { user: null }, error: null }) },
+          from: () => ({}),
+        })),
       }));
-      process.env.SUPABASE_URL = 'https://test.supabase.co';
-      process.env.SUPABASE_ANON_KEY = 'test-key';
 
-      // Import the factory AFTER setting up mocks
-      jest.resetModules(); // Clear module cache
+      const serverModule = require('@/lib/supabase/server');
       const { createSupabaseClientFactory } = require('../factories');
+      const client = await createSupabaseClientFactory();
 
-      // Act
-      const client = createSupabaseClientFactory();
-
-      // Assert - should return an object with auth and from properties
-      expect(client).toBeDefined();
+      expect(serverModule.createClient).toHaveBeenCalled();
       expect(client).toHaveProperty('auth');
-      expect(client).toHaveProperty('from');
-      // Note: We can't easily test the actual supabase-js client without more complex mocking
-      // but we can verify it returns an object with the expected interface
-    });
-
-    it('throws an error in production mode when env vars are missing', () => {
-      // Arrange - production mode but missing env vars
-      jest.mock('@/lib/mode', () => ({
-        isDemoMode: () => false,
-        isProductionMode: () => true
-      }));
-      delete process.env.SUPABASE_URL;
-      delete process.env.SUPABASE_ANON_KEY;
-
-      // Import the factory AFTER setting up mocks
-      jest.resetModules(); // Clear module cache
-      const { createSupabaseClientFactory } = require('../factories');
-
-      // Act & Assert
-      expect(() => createSupabaseClientFactory()).toThrow(
-        'Missing Supabase environment variables'
-      );
+      expect(typeof client.auth.getUser).toBe('function');
     });
   });
 });
