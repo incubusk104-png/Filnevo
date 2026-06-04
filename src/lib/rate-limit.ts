@@ -49,6 +49,50 @@ export async function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
+/**
+ * LOCK 1 (in-handler form): payload-size + per-IP rate guard for Edge route
+ * handlers.
+ *
+ * This Cloudflare-Pages app deploys via `@cloudflare/next-on-pages`, which only
+ * supports Edge middleware — but Next.js 16's `proxy`/`middleware` file always
+ * runs on the Node.js runtime, so the guard cannot live in a proxy file here.
+ * Instead, Edge route handlers call this at the top and return the response if
+ * it is non-null. Returns a 413/429 NextResponse when the request must be
+ * dropped, or null when the request may proceed.
+ */
+export function applyEdgeGuard(req: NextRequest): NextResponse | null {
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+    req.headers.get('x-real-ip') ||
+    'anonymous';
+  const currentTime = Date.now();
+
+  // 1. Defend against volumetric payload attacks (2MB hard stop).
+  const contentLength = Number(req.headers.get('content-length') || 0);
+  if (contentLength > 2 * 1024 * 1024) {
+    return NextResponse.json(
+      { error: 'Payload volume limits exceeded' },
+      { status: 413 }
+    );
+  }
+
+  // 2. Strict edge rate limiting: max 10 hits/min per IP.
+  const clientData = trackIpCache.get(ip);
+  if (!clientData || currentTime > clientData.resetTime) {
+    trackIpCache.set(ip, { count: 1, resetTime: currentTime + 60000 });
+  } else {
+    clientData.count++;
+    if (clientData.count > 10) {
+      return NextResponse.json(
+        { error: 'Rate limit tripped. Cooling down.' },
+        { status: 429 }
+      );
+    }
+  }
+
+  return null;
+}
+
 // Configuration for the middleware matcher
 // This ensures the middleware only runs on the specified routes
 export const config = {

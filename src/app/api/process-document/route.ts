@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRateLimiter } from "@/lib/mocking/factories";
 import { createSupabaseClientFactory } from "@/lib/mocking/factories";
+import { applyEdgeGuard } from "@/lib/rate-limit";
 import { FREE_ASSIGNMENT } from "@/lib/ai/providers";
 
 // LOCK 1 runs at the edge, in front of the database.
@@ -24,8 +24,12 @@ interface QuotaRpcRow {
 
 export async function POST(req: NextRequest) {
   // --- LOCK 1: Edge rate limiter -------------------------------------------
-  // Note: The actual rate limiting is handled by middleware.ts
-  // This clientId is kept for logging/metrics if needed
+  // Enforce payload-size + per-IP rate limits before touching the DB or any
+  // paid AI model. (Runs here, not in a proxy file, because next-on-pages only
+  // supports Edge middleware while Next 16 proxy is Node-only.)
+  const blocked = applyEdgeGuard(req);
+  if (blocked) return blocked;
+
   const id = clientId(req);
 
   // --- LOCK 2: atomic quota check (workspace-aware) ------------------------
