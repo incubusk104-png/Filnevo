@@ -14,11 +14,14 @@ out/
 # Cloudflare
 .wrangler/
 
-# Environment variables
+# Environment variables (never commit real keys; .env.example is the only tracked one)
 .env
 .env.development
 .env.production
 .env.local
+*.env
+local.env
+!.env.example
 
 # Build artifacts
 dist/
