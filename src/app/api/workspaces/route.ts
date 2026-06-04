@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseClientFactory } from "@/lib/mocking/factories";
+import { applyEdgeGuard } from "@/lib/rate-limit";
 
 export const runtime = "edge";
 
 // GET /api/workspaces -> list workspaces for the current user
 export async function GET(req: NextRequest) {
+  const guard = applyEdgeGuard(req);
+  if (guard) return guard;
+
   const supabase = await createSupabaseClientFactory();
   if (!supabase) {
     return NextResponse.json({ ok: false, error: "supabase_unavailable" }, { status: 500 });
@@ -49,6 +53,9 @@ export async function GET(req: NextRequest) {
 
 // POST /api/workspaces -> create a new workspace
 export async function POST(req: NextRequest) {
+  const guard = applyEdgeGuard(req);
+  if (guard) return guard;
+
   const supabase = await createSupabaseClientFactory();
   if (!supabase) {
     return NextResponse.json({ ok: false, error: "supabase_unavailable" }, { status: 500 });
