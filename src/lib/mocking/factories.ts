@@ -21,25 +21,17 @@ export const createRateLimiter = (id?: string) => {
 };
 
 // Supabase Client Factory
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
-import { createMockSupabaseClient } from '@/lib/supabase/server';
+import { createMockSupabaseClient, createServerSupabaseClient } from '@/lib/supabase/server';
 
 /**
- * Factory function that returns appropriate Supabase client based on mode
- * @returns Supabase client (mock in demo mode, real in production mode)
+ * Factory returning the appropriate Supabase client for the current mode.
+ * - Demo mode: in-memory mock.
+ * - Production: real cookie-bound server client so the authenticated user
+ *   resolves from the session cookie (RLS applies).
  */
-export const createSupabaseClientFactory = () => {
+export const createSupabaseClientFactory = async () => {
   if (isDemoMode()) {
     return createMockSupabaseClient();
   }
-
-  // Production mode - return real Supabase client
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase environment variables');
-  }
-
-  return createSupabaseClient(supabaseUrl, supabaseAnonKey);
+  return await createServerSupabaseClient();
 };

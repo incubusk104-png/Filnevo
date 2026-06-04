@@ -2,6 +2,9 @@
 // Provides a chainable, awaitable query builder that mirrors the subset of the
 // PostgREST/supabase-js surface used across the API routes. All operations
 // resolve to { data: null, error: null } in demo mode.
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 type MockResponse = { data: any; error: any };
 
@@ -73,3 +76,34 @@ export const createClient = (): MockSupabaseClient => {
 
 // For backward compatibility
 export const createMockSupabaseClient = createClient;
+
+// ---------------------------------------------------------------------------
+// Real cookie-bound server client (@supabase/ssr).
+// Reads/writes the session via Next's cookie store so login persists and API
+// routes / server components can resolve the authenticated user. Edge-safe
+// (no Node built-ins). Only call in production mode (Supabase configured).
+// ---------------------------------------------------------------------------
+export async function createServerSupabaseClient(): Promise<SupabaseClient> {
+  const url = process.env.SUPABASE_URL;
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
+    throw new Error("Missing Supabase environment variables");
+  }
+
+  const cookieStore = await cookies();
+  return createServerClient(url, anonKey, {
+    cookies: {
+      getAll: () => cookieStore.getAll(),
+      setAll: (cookiesToSet) => {
+        try {
+          for (const { name, value, options } of cookiesToSet) {
+            cookieStore.set(name, value, options);
+          }
+        } catch {
+          // setAll called from a Server Component (read-only cookie store).
+          // Token refresh persistence is handled in route handlers / actions.
+        }
+      },
+    },
+  });
+}
