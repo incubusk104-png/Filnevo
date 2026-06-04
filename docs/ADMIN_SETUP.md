@@ -151,11 +151,32 @@ CI runs both `build` and the Cloudflare Pages build; both must be green.
 
 ---
 
-## 9. Known follow-ups (not in this phase)
+## 9. Authentication (live)
 
-- **Real Supabase session wiring.** Login currently runs through mock clients;
-  wire `@supabase/ssr` cookie sessions so production auth (and the admin token
-  the `/admin` console sends) is fully live end-to-end.
+Production auth is wired with `@supabase/ssr` cookie sessions:
+
+- **Login** (`/login`) signs in via a server action; the session is written to
+  cookies by the server client (`createServerSupabaseClient`).
+- **API routes** resolve the authenticated user from that cookie
+  (`createSupabaseClientFactory` → server client), so RLS applies per-tenant.
+- **Admin console** (`/admin`) → `/api/admin/*`: same-origin requests carry the
+  session cookie automatically; `requirePlatformAdmin` validates the user and
+  checks `is_platform_admin` via the service-role client.
+
+Required browser env (in addition to the server vars in §4):
+
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+
+> Access tokens are refreshed within route handlers / server actions (writable
+> cookie context). A dedicated refresh middleware isn't used because
+> next-on-pages only supports Edge middleware while Next 16 pins `proxy` to the
+> Node runtime — the in-request refresh covers the same need.
+
+## 10. Known follow-ups (not in this phase)
+
 - **Billing (Phase 2).** PayMongo (PH: GCash/Maya/cards) first, then Stripe
   (international). Webhooks should set `subscription_tier` + `monthly_scan_quota`.
 - **International.** Add a `jurisdiction` concept + generic (non-BIR) categories,

@@ -23,35 +23,8 @@ interface UsageSummary {
   tokensByProvider: Record<string, number>;
 }
 
-// Best-effort: pull the Supabase access token the browser client persists in
-// localStorage (key shaped like `sb-<ref>-auth-token`). Used so production admins
-// authenticate to the admin API. In demo mode the API needs no token.
-function getAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    for (let i = 0; i < window.localStorage.length; i++) {
-      const key = window.localStorage.key(i);
-      if (key && key.startsWith("sb-") && key.endsWith("-auth-token")) {
-        const raw = window.localStorage.getItem(key);
-        if (!raw) continue;
-        const parsed = JSON.parse(raw);
-        if (parsed?.access_token) return parsed.access_token as string;
-      }
-    }
-  } catch {
-    /* ignore parse errors */
-  }
-  return null;
-}
-
-function authHeaders(extra?: Record<string, string>): Record<string, string> {
-  const token = getAccessToken();
-  return {
-    ...(extra ?? {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
+// Same-origin requests carry the @supabase/ssr session cookie automatically,
+// so the admin API authenticates the caller server-side. No client token needed.
 const STATUS_TONE: Record<string, string> = {
   active: "text-efficiency-green",
   past_due: "text-warning-amber",
@@ -70,7 +43,7 @@ export default function AdminDashboard() {
 
   const loadUsers = useCallback(async (q: string) => {
     const params = q ? `?search=${encodeURIComponent(q)}` : "";
-    const res = await fetch(`/api/admin/users${params}`, { headers: authHeaders() });
+    const res = await fetch(`/api/admin/users${params}`);
     const json = await res.json();
     if (!res.ok || !json.ok) throw new Error(json.error || `HTTP ${res.status}`);
     setUsers(json.users ?? []);
@@ -81,7 +54,7 @@ export default function AdminDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const usageRes = await fetch("/api/admin/usage", { headers: authHeaders() });
+      const usageRes = await fetch("/api/admin/usage");
       const usageJson = await usageRes.json();
       if (!usageRes.ok || !usageJson.ok) {
         throw new Error(usageJson.error || `HTTP ${usageRes.status}`);
@@ -105,7 +78,7 @@ export default function AdminDashboard() {
     try {
       const res = await fetch(`/api/admin/users/${id}`, {
         method: "PATCH",
-        headers: authHeaders({ "Content-Type": "application/json" }),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       const json = await res.json();
