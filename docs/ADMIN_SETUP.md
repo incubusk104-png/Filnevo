@@ -195,6 +195,47 @@ offer GCash, Maya and card payments.
 
 ---
 
+## 9. Authentication (sign-in / sign-up / Google)
+
+Auth is wired to real Supabase via `@supabase/ssr` cookie sessions. When the
+Supabase env is unset the app stays in **demo mode**: `/login` is reachable but
+authentication is simulated (mock client).
+
+### 9.1 How it works
+
+- `src/lib/supabase/server.ts` / `client.ts` — real cookie-bound server and
+  browser clients (mock fallback in demo).
+- `src/middleware.ts` — refreshes the session on each request (Edge runtime;
+  kept on the legacy `middleware` convention because Next 16 `proxy` is
+  Node-only and Cloudflare Pages requires Edge).
+- `src/app/login/actions.ts` — `signIn`, `signUp`, `signInWithGoogle`, `signOut`
+  server actions. Inputs validated with `zod`; sign-up enforces the password
+  policy server-side.
+- `src/app/auth/callback/route.ts` — exchanges the OAuth / email-confirmation
+  `code` for a session, then redirects.
+
+### 9.2 Password policy
+
+Defined once in `src/lib/auth/password.ts` and shared by the client strength
+meter and the server check: min 10 chars, upper + lowercase, a number, and a
+symbol. Sign-up is rejected server-side if the policy is not met.
+
+### 9.3 Enable Google sign-in
+
+1. **Google Cloud Console** → APIs & Services → Credentials → create an OAuth
+   2.0 Client ID (type *Web application*). Authorized redirect URI:
+   `https://<project-ref>.supabase.co/auth/v1/callback`.
+2. **Supabase dashboard** → Authentication → Providers → **Google**: paste the
+   Client ID + Client Secret and enable it.
+3. **Supabase** → Authentication → URL Configuration: set **Site URL** to
+   `APP_URL` and add `${APP_URL}/auth/callback` to the redirect allow-list.
+
+No extra app env vars are needed for Google — the provider lives in Supabase.
+Manual email/password sign-up works as soon as Supabase is configured (enable
+"Confirm email" in Auth settings if you want verification).
+
+---
+
 ## 10. Build & deploy
 
 ```bash
@@ -209,9 +250,6 @@ CI runs both `build` and the Cloudflare Pages build; both must be green.
 
 ## 11. Known follow-ups (not in this phase)
 
-- **Real Supabase session wiring.** Login currently runs through mock clients;
-  wire `@supabase/ssr` cookie sessions so production auth (and the admin token
-  the `/admin` console sends) is fully live end-to-end.
 - **Billing — Stripe (international).** Phase 2 PayMongo (PH: GCash/Maya/cards)
   is implemented (see §8). Next: add Stripe for international cards + true
   card auto-recurring subscriptions.

@@ -1,7 +1,16 @@
-// Mock supabase server implementation.
-// Provides a chainable, awaitable query builder that mirrors the subset of the
-// PostgREST/supabase-js surface used across the API routes. All operations
-// resolve to { data: null, error: null } in demo mode.
+// Server-side Supabase access.
+//
+// In production (Supabase configured) this returns a real @supabase/ssr client
+// bound to the request cookies, so server actions / route handlers operate on
+// the caller's live session. In demo mode (no Supabase env) it returns the mock
+// client below so the app still renders and the auth UI degrades gracefully.
+import { cookies } from "next/headers";
+import {
+  createServerClient,
+  type CookieMethodsServer,
+} from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { isDemoMode } from "@/lib/mode";
 
 type MockResponse = { data: any; error: any };
 
@@ -50,6 +59,8 @@ interface MockSupabaseClient {
     getSession: (...args: any[]) => Promise<MockResponse>;
     signInWithPassword: (...args: any[]) => Promise<MockResponse>;
     signUp: (...args: any[]) => Promise<MockResponse>;
+    signInWithOAuth: (...args: any[]) => Promise<{ data: { url: string | null }; error: any }>;
+    exchangeCodeForSession: (...args: any[]) => Promise<MockResponse>;
     signOut: (...args: any[]) => Promise<{ error: any }>;
     getUser: (...args: any[]) => Promise<{ data: { user: any }; error: any }>;
   };
@@ -57,12 +68,14 @@ interface MockSupabaseClient {
   rpc: (...args: any[]) => Promise<MockResponse>;
 }
 
-export const createClient = (): MockSupabaseClient => {
+export const createMockSupabaseClient = (): MockSupabaseClient => {
   return {
     auth: {
       getSession: async () => ({ data: { session: null }, error: null }),
       signInWithPassword: async () => ({ data: { user: null }, error: null }),
       signUp: async () => ({ data: { user: null }, error: null }),
+      signInWithOAuth: async () => ({ data: { url: null }, error: null }),
+      exchangeCodeForSession: async () => ({ data: { session: null }, error: null }),
       signOut: async () => ({ error: null }),
       getUser: async () => ({ data: { user: null }, error: null }),
     },
@@ -71,5 +84,35 @@ export const createClient = (): MockSupabaseClient => {
   };
 };
 
-// For backward compatibility
-export const createMockSupabaseClient = createClient;
+/**
+ * Server Supabase client. Real (cookie-bound) when configured, mock in demo.
+ * Cookie writes are wrapped in try/catch so this is also safe to call from
+ * Server Components (where the cookie store is read-only).
+ */
+export async function createClient(): Promise<SupabaseClient> {
+  if (isDemoMode()) {
+    return createMockSupabaseClient() as unknown as SupabaseClient;
+  }
+
+  const url = process.env.SUPABASE_URL as string;
+  const anonKey = process.env.SUPABASE_ANON_KEY as string;
+  const cookieStore = await cookies();
+
+  const cookieMethods: CookieMethodsServer = {
+    getAll() {
+      return cookieStore.getAll();
+    },
+    setAll(cookiesToSet) {
+      try {
+        for (const { name, value, options } of cookiesToSet) {
+          cookieStore.set(name, value, options);
+        }
+      } catch {
+        // Called from a Server Component — cookie writes are handled by the
+        // session-refresh middleware instead. Safe to ignore.
+      }
+    },
+  };
+
+  return createServerClient(url, anonKey, { cookies: cookieMethods });
+}
