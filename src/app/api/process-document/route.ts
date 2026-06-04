@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRateLimiter } from "@/lib/mocking/factories";
 import { createSupabaseClientFactory } from "@/lib/mocking/factories";
+import { FREE_ASSIGNMENT } from "@/lib/ai/providers";
 
 // LOCK 1 runs at the edge, in front of the database.
 export const runtime = "edge";
@@ -99,14 +100,15 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     const fallbackId = body.tenantId ?? id;
     console.error(`Unexpected error in quota check (client=${fallbackId}):`, error);
-    // Fallback to demo mode if Supabase is unavailable.
+    // Fallback to demo mode if Supabase is unavailable. Mirror the real routing
+    // policy (free tier -> Cerebras) so demo responses match production behaviour.
     quota = {
       allowed: true,
       used: 0,
       limit: 100,
       remaining: 100,
-      assigned_provider: 'demo',
-      assigned_model: 'demo'
+      assigned_provider: FREE_ASSIGNMENT.provider,
+      assigned_model: FREE_ASSIGNMENT.model
     };
   }
 
