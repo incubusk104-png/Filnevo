@@ -36,10 +36,10 @@ export default function PricingSection() {
               </div>
               <div>
                 <h3 className="font-metrics text-xl text-neutral-100 font-semibold mb-2">
-                  Free Sandbox
+                  Free Trial
                 </h3>
                 <p className="text-text-muted text-sm">
-                  Perfect for individuals getting started with BIR compliance
+                  Try Filnevo free — no credit card. Be filing-ready in minutes.
                 </p>
               </div>
             </div>
@@ -70,8 +70,8 @@ export default function PricingSection() {
                 </span>
                 <span className="text-text-muted text-xs ml-2">/ month</span>
               </div>
-              <Button variant="outline" href="/login">
-                Get Started Free
+              <Button variant="outline" href="/login?mode=signup">
+                Start Free Trial
               </Button>
             </div>
           </article>
@@ -131,7 +131,7 @@ export default function PricingSection() {
                 <span className="text-text-muted text-xs ml-2">/ month</span>
               </div>
               <UpgradeButton tier="starter" variant="primary">
-                Start Free Trial
+                Get Starter
               </UpgradeButton>
             </div>
           </article>
@@ -191,7 +191,7 @@ export default function PricingSection() {
                 <span className="text-text-muted text-xs ml-2">/ month</span>
               </div>
               <UpgradeButton tier="business_pro" variant="primary">
-                Start Free Trial
+                Get Business Pro
               </UpgradeButton>
             </div>
           </article>
@@ -251,7 +251,7 @@ export default function PricingSection() {
                 <span className="text-text-muted text-xs ml-2">/ month</span>
               </div>
               <UpgradeButton tier="agency_core" variant="primary">
-                Upgrade to Agency Core
+                Get Agency Core
               </UpgradeButton>
             </div>
           </article>
@@ -269,8 +269,8 @@ export default function PricingSection() {
             <Button variant="outline" href="#features">
               Explore All Features
             </Button>
-            <Button variant="primary" href="/login">
-              Get Started Free
+            <Button variant="primary" href="/login?mode=signup">
+              Start Free Trial
             </Button>
           </div>
         </div>

@@ -13,7 +13,7 @@ export interface TierMeta {
 }
 
 export const TIERS: Record<SubscriptionTier, TierMeta> = {
-  free: { tier: "free", label: "Free Sandbox", pricePhp: 0, monthlyScanQuota: 5 },
+  free: { tier: "free", label: "Free Trial", pricePhp: 0, monthlyScanQuota: 5 },
   starter: { tier: "starter", label: "Starter", pricePhp: 299, monthlyScanQuota: 50 },
   business_pro: { tier: "business_pro", label: "Business Pro", pricePhp: 799, monthlyScanQuota: 500 },
   agency_core: { tier: "agency_core", label: "Agency Core", pricePhp: 2499, monthlyScanQuota: 5000 },

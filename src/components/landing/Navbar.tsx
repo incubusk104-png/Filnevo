@@ -40,7 +40,7 @@ export default function Navbar() {
           <Button variant="outline" size="sm" href="/login">
             Sign In
           </Button>
-          <Button variant="primary" size="sm" href="/login">
+          <Button variant="primary" size="sm" href="/login?mode=signup">
             Sign Up
           </Button>
         </div>

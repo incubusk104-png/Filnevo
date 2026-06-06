@@ -19,13 +19,13 @@ const METER_COLORS = [
   "bg-efficiency-green",
 ];
 
-export function LoginForm() {
+export function LoginForm({ signupMode = false }: { signupMode?: boolean }) {
   const [signInState, signInAction, signingIn] = useActionState<AuthState, FormData>(signIn, null);
   const [signUpState, signUpAction, signingUp] = useActionState<AuthState, FormData>(signUp, null);
   const [googleState, googleAction, googlePending] = useActionState<AuthState, FormData>(signInWithGoogle, null);
 
   const [password, setPassword] = useState("");
-  const [showRules, setShowRules] = useState(false);
+  const [showRules, setShowRules] = useState(signupMode);
 
   // OAuth navigation happens client-side: the server action returns the Google
   // authorization URL (redirecting to an external URL from within a Server
@@ -88,7 +88,7 @@ export function LoginForm() {
             name="password"
             type="password"
             required
-            autoComplete="current-password"
+            autoComplete={signupMode ? "new-password" : "current-password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onFocus={() => setShowRules(true)}
@@ -148,16 +148,24 @@ export function LoginForm() {
           <button
             formAction={signInAction}
             disabled={pending}
-            className="flex-1 rounded-md bg-velocity-blue px-4 py-2.5 font-metrics text-sm font-semibold text-neutral-50 transition-all hover:bg-velocity-blue/90 active:scale-[0.98] disabled:opacity-50"
+            className={`flex-1 rounded-md px-4 py-2.5 font-metrics text-sm font-semibold transition-all active:scale-[0.98] disabled:opacity-50 ${
+              signupMode
+                ? "order-2 border border-neutral-700 bg-neutral-900/40 text-neutral-100 hover:border-insight-cyan/60 hover:text-insight-cyan"
+                : "order-1 bg-velocity-blue text-neutral-50 hover:bg-velocity-blue/90"
+            }`}
           >
             {signingIn ? "Signing in…" : "Sign In"}
           </button>
           <button
             formAction={signUpAction}
             disabled={pending}
-            className="flex-1 rounded-md border border-neutral-700 bg-neutral-900/40 px-4 py-2.5 font-metrics text-sm font-semibold text-neutral-100 transition-all hover:border-insight-cyan/60 hover:text-insight-cyan active:scale-[0.98] disabled:opacity-50"
+            className={`flex-1 rounded-md px-4 py-2.5 font-metrics text-sm font-semibold transition-all active:scale-[0.98] disabled:opacity-50 ${
+              signupMode
+                ? "order-1 bg-velocity-blue text-neutral-50 hover:bg-velocity-blue/90"
+                : "order-2 border border-neutral-700 bg-neutral-900/40 text-neutral-100 hover:border-insight-cyan/60 hover:text-insight-cyan"
+            }`}
           >
-            {signingUp ? "Creating account…" : "Sign Up"}
+            {signingUp ? "Creating account…" : signupMode ? "Create free account" : "Sign Up"}
           </button>
         </div>
 

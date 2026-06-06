@@ -205,8 +205,8 @@ export default function TestimonialsSection() {
             <Button variant="outline" href="#features">
               Explore Features
             </Button>
-            <Button variant="primary" href="/login">
-              Get Started Free
+            <Button variant="primary" href="/login?mode=signup">
+              Start Free Trial
             </Button>
           </div>
         </div>

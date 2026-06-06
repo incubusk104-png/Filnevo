@@ -50,7 +50,7 @@ export default function CTASection() {
           <Button variant="outline" href="#features">
             Explore All Features
           </Button>
-          <Button variant="primary" href="/login">
+          <Button variant="primary" href="/login?mode=signup">
             Start Free Trial
           </Button>
         </div>

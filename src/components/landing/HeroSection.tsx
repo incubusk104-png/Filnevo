@@ -64,8 +64,8 @@ export default function HeroSection() {
           </p>
 
           <div className="enter mt-9 flex flex-col gap-4 sm:flex-row" style={delay(240)}>
-            <Button variant="primary" size="lg" href="/login" className="shadow-lg shadow-velocity-blue/20">
-              Get Started Free
+            <Button variant="primary" size="lg" href="/login?mode=signup" className="shadow-lg shadow-velocity-blue/20">
+              Start Free Trial
             </Button>
             <Button variant="outline" size="lg" href="#features">
               Explore Features

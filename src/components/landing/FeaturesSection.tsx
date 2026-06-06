@@ -198,8 +198,8 @@ export default function FeaturesSection() {
             <Button variant="outline" href="#pricing">
               See Pricing Plans
             </Button>
-            <Button variant="primary" href="/login">
-              Get Started Free
+            <Button variant="primary" href="/login?mode=signup">
+              Start Free Trial
             </Button>
           </div>
         </div>

@@ -8,10 +8,11 @@ export const runtime = "edge";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; mode?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, mode } = await searchParams;
   const configured = isSupabaseConfigured();
+  const signupMode = mode === "signup";
 
   return (
     <main className="relative grid min-h-dvh place-items-center overflow-hidden px-4 py-10">
@@ -28,10 +29,12 @@ export default async function LoginPage({
         </a>
 
         <h1 className="mt-6 font-heading text-2xl font-bold tracking-tight text-foreground">
-          Welcome to Filnevo
+          {signupMode ? "Start your free trial" : "Welcome to Filnevo"}
         </h1>
         <p className="mt-1.5 font-body text-sm text-text-muted">
-          Sign in to your account, or create a new one to get started.
+          {signupMode
+            ? "Create your free account — 5 document scans every month, no credit card required."
+            : "Sign in to your account, or create a new one to get started."}
         </p>
 
         {!configured && (
@@ -46,7 +49,7 @@ export default async function LoginPage({
           </p>
         )}
 
-        <LoginForm />
+        <LoginForm signupMode={signupMode} />
       </div>
     </main>
   );
