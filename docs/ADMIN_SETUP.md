@@ -222,17 +222,37 @@ symbol. Sign-up is rejected server-side if the policy is not met.
 
 ### 9.3 Enable Google sign-in
 
-1. **Google Cloud Console** → APIs & Services → Credentials → create an OAuth
-   2.0 Client ID (type *Web application*). Authorized redirect URI:
-   `https://<project-ref>.supabase.co/auth/v1/callback`.
+The OAuth round-trip is: app → Google → **Supabase** callback → app
+`/auth/callback`. Google therefore redirects to **Supabase**, *not* to the app
+— the #1 mistake is putting the app URL in "Authorized redirect URIs".
+
+1. **Google Cloud Console** → APIs & Services → Credentials → create (or edit)
+   an OAuth 2.0 Client ID, type *Web application*.
+
+   **Authorized JavaScript origins** (scheme + host only, no path, no trailing
+   slash) — add each site that initiates sign-in:
+   - `https://<your-live-domain>`        e.g. `https://filnevo.pages.dev`
+   - `http://localhost:3000`             (local dev — optional)
+
+   **Authorized redirect URIs** (must be the Supabase callback, exactly):
+   - `https://<project-ref>.supabase.co/auth/v1/callback`
+
+   `<project-ref>` is the subdomain of your `NEXT_PUBLIC_SUPABASE_URL`
+   (e.g. for `https://abcd1234.supabase.co` the ref is `abcd1234`).
+
 2. **Supabase dashboard** → Authentication → Providers → **Google**: paste the
-   Client ID + Client Secret and enable it.
-3. **Supabase** → Authentication → URL Configuration: set **Site URL** to
-   `APP_URL` and add `${APP_URL}/auth/callback` to the redirect allow-list.
+   Client ID + Client Secret and toggle it on.
+3. **Supabase** → Authentication → URL Configuration:
+   - **Site URL** = your live domain (same as `APP_URL`).
+   - **Redirect URLs** allow-list — add both:
+     - `https://<your-live-domain>/auth/callback`
+     - `http://localhost:3000/auth/callback` (local dev — optional)
 
 No extra app env vars are needed for Google — the provider lives in Supabase.
-Manual email/password sign-up works as soon as Supabase is configured (enable
-"Confirm email" in Auth settings if you want verification).
+Set `APP_URL` to the live domain so email-confirmation and checkout redirects
+also resolve to production. Manual email/password sign-up works as soon as
+Supabase is configured (enable "Confirm email" in Auth settings for
+verification).
 
 ---
 

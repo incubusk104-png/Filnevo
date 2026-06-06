@@ -25,9 +25,26 @@ export function isPaymongoWebhookConfigured(): boolean {
   return !!process.env.PAYMONGO_WEBHOOK_SECRET;
 }
 
-/** Resolve the public base URL used to build success/cancel redirects. */
-export function appBaseUrl(): string {
-  return (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
+/**
+ * Resolve the public base URL used to build success/cancel redirects.
+ *
+ * Order of preference:
+ *  1. `APP_URL` env (explicit, deterministic — recommended in production).
+ *  2. The live origin derived from the incoming request headers
+ *     (`x-forwarded-host`/`host` + `x-forwarded-proto`), so a deployed site
+ *     never falls back to localhost even when `APP_URL` is unset.
+ *  3. `http://localhost:3000` for local dev.
+ */
+export function appBaseUrl(headers?: Headers): string {
+  if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
+  if (headers) {
+    const host = headers.get("x-forwarded-host") ?? headers.get("host");
+    if (host) {
+      const proto = headers.get("x-forwarded-proto") ?? "https";
+      return `${proto}://${host}`.replace(/\/$/, "");
+    }
+  }
+  return "http://localhost:3000";
 }
 
 export interface CheckoutSession {
@@ -43,6 +60,12 @@ export interface CreateCheckoutArgs {
   tier: SubscriptionTier;
   userId: string;
   email?: string;
+  /**
+   * Public base URL for the success/cancel redirects. Pass the request-derived
+   * origin from the route so deployed checkouts return to the live site rather
+   * than localhost. Falls back to `appBaseUrl()` when omitted.
+   */
+  baseUrl?: string;
 }
 
 /**
@@ -56,7 +79,7 @@ export async function createCheckoutSession(
 ): Promise<CheckoutSession> {
   const { tier, userId, email } = args;
   const meta = TIERS[tier];
-  const base = appBaseUrl();
+  const base = (args.baseUrl ?? appBaseUrl()).replace(/\/$/, "");
   const successUrl = `${base}/billing/success?tier=${tier}`;
   const cancelUrl = `${base}/?billing=cancelled#pricing`;
 
