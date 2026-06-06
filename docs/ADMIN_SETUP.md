@@ -144,11 +144,12 @@ explicit `monthly_scan_quota` is included in the same request.
 
 ## 8. Billing — PayMongo (Phase 2)
 
-PH e-wallet billing via **PayMongo** (GCash / Maya / cards). Because PayMongo
-e-wallets do not support true card-style auto-recurring charges, this is a
-**renew-by-checkout** model: each period the user completes a hosted checkout,
-and the `payment.paid` webhook grants the next period. This is the standard
-pattern for PH SaaS.
+PH billing via **PayMongo**, using **QR Ph only** (customers pay by scanning /
+uploading the dynamic QR in GCash, Maya or any InstaPay-enabled bank app). Card
+and hosted-checkout e-wallet methods are intentionally not offered. Because QR
+Ph does not support auto-recurring charges, this is a **renew-by-QR** model:
+each period the user pays a fresh QR and the `payment.paid` webhook (or the
+status poll) grants the next period. This is a standard pattern for PH SaaS.
 
 ### 8.1 Migration
 
@@ -167,18 +168,16 @@ Apply with `supabase db push` (idempotent — safe to re-run).
 |-----|---------|
 | `PAYMONGO_SECRET_KEY` | PayMongo secret key (`sk_test_…` / `sk_live_…`). Server-only. |
 | `PAYMONGO_WEBHOOK_SECRET` | Webhook signing secret used to verify `Paymongo-Signature`. |
-| `APP_URL` | Public base URL for building checkout success/cancel redirects. |
+| `APP_URL` | Public base URL for auth/callback redirects. |
 
-> **Demo mode:** when `PAYMONGO_SECRET_KEY` is unset, `/api/billing/checkout`
-> returns a stubbed hosted URL (the local `/billing/success` page) and
-> `/api/billing/webhook` skips signature verification. The whole flow builds
-> and runs without any keys.
+> **Demo mode:** when `PAYMONGO_SECRET_KEY` is unset, `/api/billing/qrph`
+> returns a stubbed placeholder QR and `/api/billing/webhook` skips signature
+> verification. The whole flow builds and runs without any keys.
 
 ### 8.3 Endpoints
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| `POST` | `/api/billing/checkout` | Cookie-authed. Body `{ "tier": "starter" \| "business_pro" \| "agency_core" }`. Creates a PayMongo Checkout Session and returns `{ checkout_url }`; metadata carries `user_id` + `tier`. |
 | `POST` | `/api/billing/qrph` | Cookie-authed. Body `{ "tier": … }`. Generates a dynamic **QR Ph** code via PayMongo and returns `{ qr_image_url (base64 PNG data URI), payment_intent_id, amount, expires_at }`; intent metadata carries `user_id` + `tier`, and a `pending` ledger row is written keyed by the payment intent id. |
 | `GET` | `/api/billing/qrph/status?id=<pi>` | Cookie-authed. Polls the Payment Intent status. On `succeeded` it applies the upgrade (idempotent) so access is granted even if the webhook is unregistered. Returns `{ status, paid }`. |
 | `POST` | `/api/billing/webhook` | PayMongo → us. Verifies the `Paymongo-Signature` HMAC, and on `payment.paid` sets `subscription_tier`, `monthly_scan_quota` (tier default), `subscription_status='active'`, resets the usage counter and stamps the new `current_period_end`. QR Ph payments are attributed via metadata or, failing that, the pending ledger row keyed by `payment_intent_id`. |
@@ -208,8 +207,7 @@ https://<APP_URL>/api/billing/webhook
 
 Subscribe to the `payment.paid` event (QR Ph also emits `payment.failed` and
 `qrph.expired`), copy the generated signing secret into
-`PAYMONGO_WEBHOOK_SECRET`, and redeploy. The hosted checkout pages already
-offer GCash, Maya and card payments. The QR Ph status poll also confirms
+`PAYMONGO_WEBHOOK_SECRET`, and redeploy. The QR Ph status poll also confirms
 payments, so the webhook is recommended but not strictly required for upgrades.
 
 ---

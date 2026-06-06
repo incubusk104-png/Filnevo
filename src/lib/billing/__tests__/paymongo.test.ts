@@ -1,5 +1,4 @@
 import {
-  createCheckoutSession,
   createQrphPayment,
   getPaymentIntentStatus,
   parseSignatureHeader,
@@ -142,17 +141,6 @@ describe("paymongo", () => {
       delete process.env.PAYMONGO_SECRET_KEY;
       const res = await getPaymentIntentStatus("demo_pi_x");
       expect(res).toEqual({ status: "awaiting_next_action", demo: true });
-    });
-  });
-
-  describe("createCheckoutSession (demo)", () => {
-    it("returns a stubbed session when no secret key is set", async () => {
-      delete process.env.PAYMONGO_SECRET_KEY;
-      const session = await createCheckoutSession({ tier: "starter", userId: "u-1" });
-      expect(session.demo).toBe(true);
-      expect(session.id).toContain("demo_");
-      expect(session.checkoutUrl).toContain("/billing/success");
-      expect(session.checkoutUrl).toContain("tier=starter");
     });
   });
 });
