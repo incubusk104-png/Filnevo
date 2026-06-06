@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { resolveBillingUser } from "@/lib/billing/auth";
-import { createCheckoutSession } from "@/lib/billing/paymongo";
+import { appBaseUrl, createCheckoutSession } from "@/lib/billing/paymongo";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { TIERS, isSubscriptionTier } from "@/lib/tiers";
 
@@ -41,6 +41,9 @@ export async function POST(req: NextRequest) {
       tier,
       userId: auth.userId,
       email: auth.email,
+      // Resolve the live origin from the request so deployed checkouts return
+      // to the real site instead of localhost when APP_URL is unset.
+      baseUrl: appBaseUrl(req.headers),
     });
   } catch (err) {
     console.error("checkout_create_failed:", (err as Error).message);
