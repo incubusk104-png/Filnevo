@@ -16,6 +16,14 @@ const credentialsSchema = z.object({
   password: z.string().min(1, "Password is required."),
 });
 
+const verifySchema = z.object({
+  email: z.string().trim().email("Enter a valid email address."),
+  token: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, "Enter the 6-digit code from your email."),
+});
+
 /** Resolve the public origin for OAuth redirects. */
 async function getOrigin(): Promise<string> {
   if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
@@ -74,14 +82,55 @@ export async function signUp(
   });
   if (error) return { error: error.message };
 
-  // Keep new sign-ups on the form with a confirmation notice instead of
-  // bouncing to the marketing landing page. Accounts verify their email
-  // before signing in.
+  // Email confirmation disabled — a session is returned immediately.
   if (data.session) {
-    // Email confirmation is disabled — the account is active immediately.
-    return { notice: "Account created — you can sign in now." };
+    revalidatePath("/", "layout");
+    redirect("/");
   }
-  return { notice: "Check your inbox to confirm your email, then sign in." };
+
+  // Otherwise Supabase emailed a verification code. Move to the verify step
+  // where the user enters that code to activate the account.
+  redirect(`/login/verify?email=${encodeURIComponent(parsed.data.email)}`);
+}
+
+export async function verifyEmail(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const parsed = verifySchema.safeParse({
+    email: formData.get("email"),
+    token: formData.get("token"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.verifyOtp({
+    email: parsed.data.email,
+    token: parsed.data.token,
+    type: "signup",
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath("/", "layout");
+  redirect("/");
+}
+
+export async function resendCode(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!z.string().email().safeParse(email).success) {
+    return { error: "Enter a valid email address." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resend({ type: "signup", email });
+  if (error) return { error: error.message };
+
+  return { notice: "A new code is on its way — check your inbox." };
 }
 
 export async function signInWithGoogle(

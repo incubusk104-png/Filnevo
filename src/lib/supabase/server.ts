@@ -60,6 +60,8 @@ interface MockSupabaseClient {
     signInWithPassword: (...args: any[]) => Promise<MockResponse>;
     signUp: (...args: any[]) => Promise<MockResponse>;
     signInWithOAuth: (...args: any[]) => Promise<{ data: { url: string | null }; error: any }>;
+    verifyOtp: (...args: any[]) => Promise<MockResponse>;
+    resend: (...args: any[]) => Promise<MockResponse>;
     exchangeCodeForSession: (...args: any[]) => Promise<MockResponse>;
     signOut: (...args: any[]) => Promise<{ error: any }>;
     getUser: (...args: any[]) => Promise<{ data: { user: any }; error: any }>;
@@ -75,6 +77,9 @@ export const createMockSupabaseClient = (): MockSupabaseClient => {
       signInWithPassword: async () => ({ data: { user: null }, error: null }),
       signUp: async () => ({ data: { user: null }, error: null }),
       signInWithOAuth: async () => ({ data: { url: null }, error: null }),
+      // Demo mode accepts any code so the verification step is demoable.
+      verifyOtp: async () => ({ data: { user: null, session: null }, error: null }),
+      resend: async () => ({ data: {}, error: null }),
       exchangeCodeForSession: async () => ({ data: { session: null }, error: null }),
       signOut: async () => ({ error: null }),
       // Demo mode has no real session; surface a stable demo user so
