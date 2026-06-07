@@ -1,13 +1,29 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Lock } from "lucide-react";
+import { ArrowLeft, Lock } from "lucide-react";
 import { Turnstile } from "@/components/captcha/Turnstile";
+import { Notice } from "@/components/ui/Notice";
 import { resendCode, verifyEmail, type AuthState } from "./actions";
 
 // Step 2 of manual sign-up: the user enters the 6-digit code Supabase emailed.
-// `verifyEmail` confirms it server-side (verifyOtp), which establishes the
-// session and redirects home.
+// Order is enforced — the CAPTCHA must pass FIRST, which unlocks the code field
+// and the submit. `verifyEmail` then re-checks the token server-side (and runs
+// verifyOtp), establishing the session and redirecting home.
+function StepBadge({ n, done }: { n: number; done?: boolean }) {
+  return (
+    <span
+      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-metrics text-[10px] font-semibold transition-colors ${
+        done
+          ? "bg-efficiency-green/20 text-efficiency-green"
+          : "bg-velocity-blue/15 text-velocity-blue"
+      }`}
+    >
+      {n}
+    </span>
+  );
+}
+
 export function VerifyForm({ email }: { email: string }) {
   const [verifyState, verifyAction, verifying] = useActionState<AuthState, FormData>(
     verifyEmail,
@@ -25,11 +41,27 @@ export function VerifyForm({ email }: { email: string }) {
 
   return (
     <div className="mt-7 space-y-4">
-      <form action={verifyAction} className="space-y-4">
+      <form action={verifyAction} className="space-y-5">
         <input type="hidden" name="email" value={email} />
-        <label className="block">
-          <span className="font-metrics text-[11px] font-medium uppercase tracking-[0.16em] text-text-muted">
-            Verification code
+
+        {/* Step 1 — human verification (must pass before the code is accepted) */}
+        <div className="space-y-2">
+          <span className="flex items-center gap-2 font-metrics text-[11px] font-medium uppercase tracking-[0.16em] text-text-muted">
+            <StepBadge n={1} done={captchaOk} /> Verify you&apos;re human
+          </span>
+          <Turnstile
+            action="signup-verify"
+            onVerify={() => setCaptchaOk(true)}
+            onExpire={() => setCaptchaOk(false)}
+          />
+        </div>
+
+        {/* Step 2 — enter the emailed code (locked until step 1 passes) */}
+        <label
+          className={`block transition-opacity ${captchaOk ? "opacity-100" : "opacity-50"}`}
+        >
+          <span className="flex items-center gap-2 font-metrics text-[11px] font-medium uppercase tracking-[0.16em] text-text-muted">
+            <StepBadge n={2} /> Verification code
           </span>
           <input
             name="token"
@@ -38,27 +70,21 @@ export function VerifyForm({ email }: { email: string }) {
             pattern="\d{6}"
             maxLength={6}
             required
-            autoFocus
+            disabled={!captchaOk}
             placeholder="••••••"
-            className="form-input mt-1.5 text-center font-data text-lg tracking-[0.5em]"
+            className="form-input mt-1.5 text-center font-data text-lg tracking-[0.5em] disabled:cursor-not-allowed"
           />
         </label>
 
-        <Turnstile
-          action="signup-verify"
-          onVerify={() => setCaptchaOk(true)}
-          onExpire={() => setCaptchaOk(false)}
-        />
-
         {error && (
-          <p className="rounded-md border border-alert-red/40 bg-alert-red/10 px-3 py-2 font-body text-xs text-alert-red">
+          <Notice key={error} variant="error">
             {error}
-          </p>
+          </Notice>
         )}
         {notice && (
-          <p className="rounded-md border border-insight-cyan/40 bg-insight-cyan/10 px-3 py-2 font-body text-xs text-insight-cyan">
+          <Notice key={notice} variant="success">
             {notice}
-          </p>
+          </Notice>
         )}
 
         <button
@@ -66,7 +92,7 @@ export function VerifyForm({ email }: { email: string }) {
           disabled={busy || !captchaOk}
           className="w-full rounded-md bg-velocity-blue px-4 py-2.5 font-metrics text-sm font-semibold text-neutral-50 transition-all hover:bg-velocity-blue/90 active:scale-[0.98] disabled:opacity-50"
         >
-          {verifying ? "Verifying…" : "Verify email"}
+          {verifying ? "Verifying…" : captchaOk ? "Verify email" : "Complete verification first"}
         </button>
       </form>
 
@@ -88,6 +114,14 @@ export function VerifyForm({ email }: { email: string }) {
           Use a different email
         </a>
       </div>
+
+      <a
+        href="/"
+        className="group flex w-full items-center justify-center gap-1.5 rounded-md px-4 py-2 font-metrics text-xs font-medium text-text-muted transition-colors hover:text-neutral-200"
+      >
+        <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
+        Back to home
+      </a>
 
       <p className="flex items-center justify-center gap-1.5 pt-1 font-body text-[11px] text-text-faint">
         <Lock className="h-3 w-3" /> Your connection is encrypted.

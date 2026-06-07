@@ -478,6 +478,32 @@ html {
 }
 .spin-slow { animation: spin-slow 24s linear infinite; }
 
+/* Toast / inline notification — springy entrance with a sweeping accent line.
+   Apply `.notice-in` to the container; the ::before draws a left accent bar
+   that grows in. Re-mount with a `key` to replay on message change. */
+@keyframes notice-in {
+  0%   { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  60%  { opacity: 1; transform: translateY(2px) scale(1.005); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes notice-bar {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+.notice-in {
+  animation: notice-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.notice-in::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border-radius: 3px;
+  background: currentColor;
+  transform-origin: top;
+  animation: notice-bar 0.5s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .text-shimmer,
   .aurora-blue,
@@ -486,4 +512,6 @@ html {
   .float-slower,
   .spin-slow { animation: none; }
   .enter { opacity: 1; animation: none; }
+  .notice-in { animation: none; }
+  .notice-in::before { animation: none; transform: scaleY(1); }
 }

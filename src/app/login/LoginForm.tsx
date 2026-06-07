@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { Check, Lock, X } from "lucide-react";
+import { ArrowLeft, Check, Lock, X } from "lucide-react";
 import {
   signIn,
   signInWithGoogle,
@@ -9,6 +9,7 @@ import {
   type AuthState,
 } from "./actions";
 import { checkPassword } from "@/lib/auth/password";
+import { Notice } from "@/components/ui/Notice";
 
 // Strength meter colours mapped to the Precision Metrics status palette.
 const METER_COLORS = [
@@ -134,14 +135,14 @@ export function LoginForm({ signupMode = false }: { signupMode?: boolean }) {
         )}
 
         {error && (
-          <p className="rounded-md border border-alert-red/40 bg-alert-red/10 px-3 py-2 font-body text-xs text-alert-red">
+          <Notice key={error} variant="error">
             {error}
-          </p>
+          </Notice>
         )}
         {notice && (
-          <p className="rounded-md border border-insight-cyan/40 bg-insight-cyan/10 px-3 py-2 font-body text-xs text-insight-cyan">
+          <Notice key={notice} variant="success">
             {notice}
-          </p>
+          </Notice>
         )}
 
         <div className="flex gap-3 pt-1">
@@ -168,6 +169,14 @@ export function LoginForm({ signupMode = false }: { signupMode?: boolean }) {
             {signingUp ? "Creating account…" : signupMode ? "Create free account" : "Sign Up"}
           </button>
         </div>
+
+        <a
+          href="/"
+          className="group flex w-full items-center justify-center gap-1.5 rounded-md px-4 py-2 font-metrics text-xs font-medium text-text-muted transition-colors hover:text-neutral-200"
+        >
+          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
+          Back to home
+        </a>
 
         <p className="flex items-center justify-center gap-1.5 pt-1 font-body text-[11px] text-text-faint">
           <Lock className="h-3 w-3" /> Your connection is encrypted.
