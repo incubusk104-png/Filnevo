@@ -146,37 +146,29 @@ export function LoginForm({ signupMode = false }: { signupMode?: boolean }) {
         )}
 
         <div className="flex gap-3 pt-1">
+          {/* Primary action for the current mode, paired with a Back control
+              that returns to the landing page. */}
           <button
-            formAction={signInAction}
+            formAction={signupMode ? signUpAction : signInAction}
             disabled={pending}
-            className={`flex-1 rounded-md px-4 py-2.5 font-metrics text-sm font-semibold transition-all active:scale-[0.98] disabled:opacity-50 ${
-              signupMode
-                ? "order-2 border border-neutral-700 bg-neutral-900/40 text-neutral-100 hover:border-insight-cyan/60 hover:text-insight-cyan"
-                : "order-1 bg-velocity-blue text-neutral-50 hover:bg-velocity-blue/90"
-            }`}
+            className="flex-1 rounded-md bg-velocity-blue px-4 py-2.5 font-metrics text-sm font-semibold text-neutral-50 transition-all hover:bg-velocity-blue/90 active:scale-[0.98] disabled:opacity-50"
           >
-            {signingIn ? "Signing in…" : "Sign In"}
+            {signupMode
+              ? signingUp
+                ? "Creating account…"
+                : "Sign Up"
+              : signingIn
+                ? "Signing in…"
+                : "Sign In"}
           </button>
-          <button
-            formAction={signUpAction}
-            disabled={pending}
-            className={`flex-1 rounded-md px-4 py-2.5 font-metrics text-sm font-semibold transition-all active:scale-[0.98] disabled:opacity-50 ${
-              signupMode
-                ? "order-1 bg-velocity-blue text-neutral-50 hover:bg-velocity-blue/90"
-                : "order-2 border border-neutral-700 bg-neutral-900/40 text-neutral-100 hover:border-insight-cyan/60 hover:text-insight-cyan"
-            }`}
+          <a
+            href="/"
+            className="group flex flex-1 items-center justify-center gap-1.5 rounded-md border border-neutral-700 bg-neutral-900/40 px-4 py-2.5 font-metrics text-sm font-semibold text-neutral-100 transition-colors hover:border-insight-cyan/60 hover:text-insight-cyan"
           >
-            {signingUp ? "Creating account…" : signupMode ? "Create free account" : "Sign Up"}
-          </button>
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+            Back
+          </a>
         </div>
-
-        <a
-          href="/"
-          className="group flex w-full items-center justify-center gap-1.5 rounded-md px-4 py-2 font-metrics text-xs font-medium text-text-muted transition-colors hover:text-neutral-200"
-        >
-          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
-          Back to home
-        </a>
 
         <p className="flex items-center justify-center gap-1.5 pt-1 font-body text-[11px] text-text-faint">
           <Lock className="h-3 w-3" /> Your connection is encrypted.
