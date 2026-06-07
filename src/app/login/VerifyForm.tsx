@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Lock } from "lucide-react";
+import { Turnstile } from "@/components/captcha/Turnstile";
 import { resendCode, verifyEmail, type AuthState } from "./actions";
 
 // Step 2 of manual sign-up: the user enters the 6-digit code Supabase emailed.
@@ -17,6 +18,7 @@ export function VerifyForm({ email }: { email: string }) {
     null,
   );
 
+  const [captchaOk, setCaptchaOk] = useState(false);
   const error = verifyState?.error ?? resendState?.error;
   const notice = resendState?.notice;
   const busy = verifying || resending;
@@ -42,6 +44,12 @@ export function VerifyForm({ email }: { email: string }) {
           />
         </label>
 
+        <Turnstile
+          action="signup-verify"
+          onVerify={() => setCaptchaOk(true)}
+          onExpire={() => setCaptchaOk(false)}
+        />
+
         {error && (
           <p className="rounded-md border border-alert-red/40 bg-alert-red/10 px-3 py-2 font-body text-xs text-alert-red">
             {error}
@@ -55,7 +63,7 @@ export function VerifyForm({ email }: { email: string }) {
 
         <button
           type="submit"
-          disabled={busy}
+          disabled={busy || !captchaOk}
           className="w-full rounded-md bg-velocity-blue px-4 py-2.5 font-metrics text-sm font-semibold text-neutral-50 transition-all hover:bg-velocity-blue/90 active:scale-[0.98] disabled:opacity-50"
         >
           {verifying ? "Verifying…" : "Verify email"}

@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { checkPassword } from "@/lib/auth/password";
+import { verifyTurnstile } from "@/lib/captcha/turnstile";
 
 export type AuthState =
   | { error?: string; notice?: string; redirectTo?: string }
@@ -103,6 +104,16 @@ export async function verifyEmail(
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  // Human-verification gate (Cloudflare Turnstile). No-ops in demo mode.
+  const h = await headers();
+  const captchaOk = await verifyTurnstile(
+    formData.get("cf-turnstile-response") as string | null,
+    h.get("cf-connecting-ip"),
+  );
+  if (!captchaOk) {
+    return { error: "Captcha verification failed. Please try again." };
   }
 
   const supabase = await createClient();
