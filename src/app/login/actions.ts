@@ -74,15 +74,14 @@ export async function signUp(
   });
   if (error) return { error: error.message };
 
-  // When email confirmation is enabled, no session is returned yet.
-  if (data.user && !data.session) {
-    return {
-      notice: "Check your inbox to confirm your email, then sign in.",
-    };
+  // Keep new sign-ups on the form with a confirmation notice instead of
+  // bouncing to the marketing landing page. Accounts verify their email
+  // before signing in.
+  if (data.session) {
+    // Email confirmation is disabled — the account is active immediately.
+    return { notice: "Account created — you can sign in now." };
   }
-
-  revalidatePath("/", "layout");
-  redirect("/");
+  return { notice: "Check your inbox to confirm your email, then sign in." };
 }
 
 export async function signInWithGoogle(
