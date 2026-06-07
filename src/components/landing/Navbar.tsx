@@ -1,5 +1,5 @@
-import { Button } from "@/components/shared/Button";
 import { Logo } from "@/components/shared/Logo";
+import NavAuth from "@/components/landing/NavAuth";
 
 export default function Navbar() {
   return (
@@ -35,15 +35,8 @@ export default function Navbar() {
           </a>
         </div>
 
-        {/* Auth actions */}
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" href="/login">
-            Sign In
-          </Button>
-          <Button variant="primary" size="sm" href="/login?mode=signup">
-            Sign Up
-          </Button>
-        </div>
+        {/* Auth actions — reflects the signed-in session */}
+        <NavAuth />
       </nav>
     </header>
   );
