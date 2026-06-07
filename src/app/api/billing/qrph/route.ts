@@ -3,12 +3,14 @@ import { resolveBillingUser } from "@/lib/billing/auth";
 import { createQrphPayment } from "@/lib/billing/paymongo";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { TIERS, isSubscriptionTier } from "@/lib/tiers";
+import { verifyTurnstile } from "@/lib/captcha/turnstile";
 
 // Required by @cloudflare/next-on-pages: every non-static route runs on Edge.
 export const runtime = "edge";
 
 interface QrphBody {
   tier?: string;
+  captcha_token?: string;
 }
 
 // POST /api/billing/qrph
@@ -26,6 +28,15 @@ export async function POST(req: NextRequest) {
     body = (await req.json()) as QrphBody;
   } catch {
     return NextResponse.json({ ok: false, error: "invalid_json" }, { status: 400 });
+  }
+
+  // Human-verification gate (Cloudflare Turnstile). No-ops in demo mode.
+  const captchaOk = await verifyTurnstile(
+    body.captcha_token,
+    req.headers.get("cf-connecting-ip"),
+  );
+  if (!captchaOk) {
+    return NextResponse.json({ ok: false, error: "captcha_failed" }, { status: 400 });
   }
 
   const tier = body.tier;

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SubscriptionTier } from "@/lib/ai/providers";
+import { Turnstile } from "@/components/captcha/Turnstile";
 
 interface QrPaymentProps {
   tier: SubscriptionTier;
@@ -33,9 +34,13 @@ export function QrPayment({ tier, label }: QrPaymentProps) {
   const [paid, setPaid] = useState(false);
   const [expired, setExpired] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  // Bumping this key remounts the Turnstile widget to force a fresh, single-use
+  // token (e.g. when regenerating an expired QR or retrying after an error).
+  const [captchaKey, setCaptchaKey] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const generate = useCallback(async () => {
+  const generate = useCallback(
+    async (captchaToken: string) => {
     setError(null);
     setExpired(false);
     setData(null);
@@ -43,7 +48,7 @@ export function QrPayment({ tier, label }: QrPaymentProps) {
       const res = await fetch("/api/billing/qrph", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({ tier, captcha_token: captchaToken }),
       });
       if (res.status === 401) {
         window.location.href = `/login?next=${encodeURIComponent(`/billing/pay?tier=${tier}`)}`;
@@ -52,6 +57,7 @@ export function QrPayment({ tier, label }: QrPaymentProps) {
       const json = (await res.json()) as {
         ok?: boolean;
         demo?: boolean;
+        error?: string;
         payment_intent_id?: string;
         qr_image_url?: string;
         amount?: number;
@@ -65,18 +71,35 @@ export function QrPayment({ tier, label }: QrPaymentProps) {
           amount: json.amount ?? 0,
           expiresAt: json.expires_at ?? new Date(Date.now() + 30 * 60_000).toISOString(),
         });
+      } else if (json.error === "captcha_failed") {
+        setError("Verification failed. Please complete the check and try again.");
       } else {
         setError("We couldn't generate a QR code. Please try again.");
       }
     } catch {
       setError("We couldn't generate a QR code. Please try again.");
     }
-  }, [tier]);
+  },
+    [tier],
+  );
 
-  // Generate once on mount.
-  useEffect(() => {
-    void generate();
-  }, [generate]);
+  // A solved captcha token gates QR generation: as soon as the widget verifies
+  // (instantly in demo mode), generate the QR with that single-use token.
+  const handleCaptcha = useCallback(
+    (token: string) => {
+      void generate(token);
+    },
+    [generate],
+  );
+
+  // Reset the widget (new challenge → new token) and clear the current QR so a
+  // fresh generation runs once the new token arrives.
+  const regenerate = useCallback(() => {
+    setData(null);
+    setError(null);
+    setExpired(false);
+    setCaptchaKey((k) => k + 1);
+  }, []);
 
   // Tick the countdown clock every second.
   useEffect(() => {
@@ -135,7 +158,7 @@ export function QrPayment({ tier, label }: QrPaymentProps) {
           <div className="w-full rounded-md border border-alert-red/30 bg-alert-red/10 p-4 text-center text-sm text-alert-red">
             {error}
             <button
-              onClick={() => void generate()}
+              onClick={regenerate}
               className="mt-3 block w-full rounded-md bg-velocity-blue px-4 py-2 text-sm font-medium text-neutral-50 hover:bg-velocity-blue/90"
             >
               Try again
@@ -144,8 +167,16 @@ export function QrPayment({ tier, label }: QrPaymentProps) {
         )}
 
         {!error && !data && (
-          <div className="flex h-[240px] w-[240px] items-center justify-center rounded-xl border border-hairline bg-neutral-900/40 text-sm text-text-muted">
-            Generating QR…
+          <div className="flex w-full flex-col items-center gap-4">
+            <Turnstile
+              key={captchaKey}
+              action="qrph-generate"
+              onVerify={handleCaptcha}
+              className="flex justify-center"
+            />
+            <p className="text-center text-xs text-text-muted">
+              Complete the verification above to generate your QR Ph code.
+            </p>
           </div>
         )}
 
@@ -185,7 +216,7 @@ export function QrPayment({ tier, label }: QrPaymentProps) {
 
             {expired && (
               <button
-                onClick={() => void generate()}
+                onClick={regenerate}
                 className="mt-3 rounded-md bg-velocity-blue px-4 py-2 text-sm font-medium text-neutral-50 hover:bg-velocity-blue/90"
               >
                 Generate a new QR
