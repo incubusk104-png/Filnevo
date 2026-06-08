@@ -1,6 +1,8 @@
+import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { Logo } from "@/components/shared/Logo";
 import { LoginForm } from "./LoginForm";
+import { VerifyForm } from "./VerifyForm";
 
 // Reads searchParams (dynamic) — required to run on Edge for Cloudflare Pages.
 export const runtime = "edge";
@@ -8,11 +10,22 @@ export const runtime = "edge";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; mode?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    mode?: string;
+    step?: string;
+    email?: string;
+  }>;
 }) {
-  const { error, mode } = await searchParams;
+  const { error, mode, step, email } = await searchParams;
   const configured = isSupabaseConfigured();
   const signupMode = mode === "signup";
+
+  // The email verification step is rendered on this same route (rather than a
+  // dedicated /login/verify page) so the auth flow ships as a single Edge
+  // function — keeping the Cloudflare Worker bundle under the size limit.
+  const verifyMode = step === "verify";
+  if (verifyMode && !email) redirect("/login?mode=signup");
 
   return (
     <main className="relative grid min-h-dvh place-items-center overflow-hidden px-4 py-10">
@@ -28,28 +41,53 @@ export default async function LoginPage({
           <Logo size={40} withWordmark />
         </a>
 
-        <h1 className="mt-6 font-heading text-2xl font-bold tracking-tight text-foreground">
-          {signupMode ? "Start your free trial" : "Welcome to Filnevo"}
-        </h1>
-        <p className="mt-1.5 font-body text-sm text-text-muted">
-          {signupMode
-            ? "Create your free account — 5 document scans every month, no credit card required."
-            : "Sign in to your account, or create a new one to get started."}
-        </p>
+        {verifyMode ? (
+          <>
+            <h1 className="mt-6 font-heading text-2xl font-bold tracking-tight text-foreground">
+              Verify your email
+            </h1>
+            <p className="mt-1.5 font-body text-sm text-text-muted">
+              Enter the 6-digit code we sent to{" "}
+              <span className="text-neutral-200">{email}</span> to activate your
+              free trial.
+            </p>
 
-        {!configured && (
-          <p className="mt-4 flex items-center gap-2 rounded-md border border-hairline bg-neutral-900/50 px-3 py-2 font-body text-xs text-text-muted">
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning-amber" />
-            Demo mode — sign-in is simulated until Supabase is configured.
-          </p>
-        )}
-        {error === "oauth" && (
-          <p className="mt-4 rounded-md border border-alert-red/40 bg-alert-red/10 px-3 py-2 font-body text-xs text-alert-red">
-            Google sign-in failed or was cancelled. Please try again.
-          </p>
-        )}
+            {!configured && (
+              <p className="mt-4 flex items-center gap-2 rounded-md border border-hairline bg-neutral-900/50 px-3 py-2 font-body text-xs text-text-muted">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning-amber" />
+                Demo mode — any 6-digit code is accepted until Supabase is
+                configured.
+              </p>
+            )}
 
-        <LoginForm signupMode={signupMode} />
+            <VerifyForm email={email as string} />
+          </>
+        ) : (
+          <>
+            <h1 className="mt-6 font-heading text-2xl font-bold tracking-tight text-foreground">
+              {signupMode ? "Start your free trial" : "Welcome to Filnevo"}
+            </h1>
+            <p className="mt-1.5 font-body text-sm text-text-muted">
+              {signupMode
+                ? "Create your free account — 5 document scans every month, no credit card required."
+                : "Sign in to your account, or create a new one to get started."}
+            </p>
+
+            {!configured && (
+              <p className="mt-4 flex items-center gap-2 rounded-md border border-hairline bg-neutral-900/50 px-3 py-2 font-body text-xs text-text-muted">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning-amber" />
+                Demo mode — sign-in is simulated until Supabase is configured.
+              </p>
+            )}
+            {error === "oauth" && (
+              <p className="mt-4 rounded-md border border-alert-red/40 bg-alert-red/10 px-3 py-2 font-body text-xs text-alert-red">
+                Google sign-in failed or was cancelled. Please try again.
+              </p>
+            )}
+
+            <LoginForm signupMode={signupMode} />
+          </>
+        )}
       </div>
     </main>
   );

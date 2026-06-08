@@ -91,7 +91,9 @@ export async function signUp(
 
   // Otherwise Supabase emailed a verification code. Move to the verify step
   // where the user enters that code to activate the account.
-  redirect(`/login/verify?email=${encodeURIComponent(parsed.data.email)}`);
+  redirect(
+    `/login?step=verify&email=${encodeURIComponent(parsed.data.email)}`,
+  );
 }
 
 export async function verifyEmail(
