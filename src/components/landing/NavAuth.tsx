@@ -83,7 +83,7 @@ export default function NavAuth() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
-        className="group flex items-center gap-2 rounded-full border border-neutral-800/80 bg-neutral-900/40 py-1 pl-1 pr-2.5 transition-colors hover:border-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-velocity-blue/50"
+        className="press-effect group flex items-center gap-2 rounded-full border border-neutral-800/80 bg-neutral-900/40 py-1 pl-1 pr-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-velocity-blue/50 hover:shadow-md hover:shadow-black/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-velocity-blue/50"
       >
         <span className="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-velocity-blue to-insight-cyan font-metrics text-xs font-semibold text-neutral-50">
           {initial}
@@ -114,7 +114,7 @@ export default function NavAuth() {
             role="menuitem"
             onClick={handleSignOut}
             disabled={signingOut}
-            className="flex w-full items-center gap-2.5 px-4 py-3 text-left font-metrics text-sm text-neutral-200 transition-colors hover:bg-neutral-900/70 hover:text-alert-red disabled:opacity-50"
+            className="press-effect flex w-full items-center gap-2.5 px-4 py-3 text-left font-metrics text-sm text-neutral-200 transition-colors hover:bg-neutral-900/70 hover:text-alert-red disabled:opacity-50"
           >
             <LogOut className="h-4 w-4" />
             {signingOut ? "Signing out…" : "Sign out"}

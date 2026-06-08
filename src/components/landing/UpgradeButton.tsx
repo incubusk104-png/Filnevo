@@ -22,10 +22,13 @@ export function UpgradeButton({ tier, children, variant = "primary" }: UpgradeBu
   }
 
   return (
-    <div>
-      <Button variant={variant} onClick={startPayment} disabled={loading}>
-        {loading ? "Opening…" : children}
-      </Button>
-    </div>
+    <Button
+      variant={variant}
+      onClick={startPayment}
+      disabled={loading}
+      className="w-full"
+    >
+      {loading ? "Opening…" : children}
+    </Button>
   );
 }

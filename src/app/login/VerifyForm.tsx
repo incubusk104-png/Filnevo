@@ -105,7 +105,7 @@ export function VerifyForm({ email }: { email: string }) {
           <button
             type="submit"
             disabled={busy}
-            className="font-metrics uppercase tracking-[0.14em] text-insight-cyan transition-colors hover:text-insight-cyan/80 disabled:opacity-50"
+            className="press-effect font-metrics uppercase tracking-[0.14em] text-insight-cyan transition-colors hover:text-insight-cyan/80 disabled:opacity-50"
           >
             {resending ? "Sending…" : "Resend code"}
           </button>
