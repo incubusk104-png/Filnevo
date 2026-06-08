@@ -10,8 +10,14 @@ import {
   type AuthState,
 } from "./actions";
 import { checkPassword } from "@/lib/auth/password";
+import { Turnstile } from "@/components/captcha/Turnstile";
 import { Notice } from "@/components/ui/Notice";
 import { Button } from "@/components/shared/Button";
+
+// Whether Cloudflare Turnstile is configured for this build. When it isn't
+// (local/demo, or any env missing the site key), we don't gate the form on a
+// captcha that can never solve.
+const TURNSTILE_ENABLED = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 // Strength meter colours mapped to the Precision Metrics status palette.
 const METER_COLORS = [
@@ -36,6 +42,13 @@ export function LoginForm({
 
   const [password, setPassword] = useState("");
   const [showRules, setShowRules] = useState(signupMode);
+  // Cloudflare Turnstile token state. Submitted via the injected
+  // `cf-turnstile-response` field and forwarded to Supabase as `captchaToken`,
+  // satisfying GoTrue's CAPTCHA protection. Gating the submit until it solves
+  // avoids the "request disallowed (no captcha_token found)" error. When
+  // Turnstile isn't configured, the gate is bypassed so the form still works.
+  const [captchaSolved, setCaptchaSolved] = useState(false);
+  const captchaOk = !TURNSTILE_ENABLED || captchaSolved;
 
   // OAuth navigation happens client-side: the server action returns the Google
   // authorization URL (redirecting to an external URL from within a Server
@@ -49,6 +62,7 @@ export function LoginForm({
   const error = signInState?.error ?? signUpState?.error ?? googleState?.error;
   const notice = signUpState?.notice;
   const pending = signingIn || signingUp || googlePending;
+  const submitDisabled = pending || !captchaOk;
 
   const strength = checkPassword(password);
   const showMeter = showRules || password.length > 0;
@@ -156,6 +170,16 @@ export function LoginForm({
           </div>
         )}
 
+        {/* Human-verification gate (Cloudflare Turnstile). Its token is
+            forwarded to Supabase Auth, which enforces CAPTCHA protection. */}
+        {TURNSTILE_ENABLED && (
+          <Turnstile
+            action={signupMode ? "signup" : "signin"}
+            onVerify={() => setCaptchaSolved(true)}
+            onExpire={() => setCaptchaSolved(false)}
+          />
+        )}
+
         {error && (
           <Notice key={error} variant="error">
             {error}
@@ -172,17 +196,21 @@ export function LoginForm({
           <Button
             variant="primary"
             formAction={signupMode ? signUpAction : signInAction}
-            disabled={pending}
+            disabled={submitDisabled}
             className="group w-full"
           >
             {signupMode
               ? signingUp
                 ? "Creating account…"
-                : "Create account"
+                : captchaOk
+                  ? "Create account"
+                  : "Complete verification first"
               : signingIn
                 ? "Signing in…"
-                : "Sign In"}
-            {!pending && (
+                : captchaOk
+                  ? "Sign In"
+                  : "Complete verification first"}
+            {!pending && captchaOk && (
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             )}
           </Button>

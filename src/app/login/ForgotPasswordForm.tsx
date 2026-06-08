@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { ArrowLeft, ArrowRight, Lock } from "lucide-react";
+import { Turnstile } from "@/components/captcha/Turnstile";
 import { Notice } from "@/components/ui/Notice";
 import { Button } from "@/components/shared/Button";
 import { requestPasswordReset, type AuthState } from "./actions";
+
+// When Turnstile isn't configured (local/demo), skip the captcha gate.
+const TURNSTILE_ENABLED = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 // Step 1 of password recovery: collect the account email. The action emails a
 // 6-digit reset code and forwards to the reset step. To avoid leaking which
@@ -16,6 +20,9 @@ export function ForgotPasswordForm({ next = "/" }: { next?: string }) {
     requestPasswordReset,
     null,
   );
+  // Turnstile token, forwarded to Supabase's recover endpoint as `captchaToken`.
+  const [captchaSolved, setCaptchaSolved] = useState(false);
+  const captchaOk = !TURNSTILE_ENABLED || captchaSolved;
 
   return (
     <div className="mt-7 space-y-4">
@@ -35,6 +42,15 @@ export function ForgotPasswordForm({ next = "/" }: { next?: string }) {
           />
         </label>
 
+        {/* Human-verification gate (Cloudflare Turnstile). */}
+        {TURNSTILE_ENABLED && (
+          <Turnstile
+            action="password-reset-request"
+            onVerify={() => setCaptchaSolved(true)}
+            onExpire={() => setCaptchaSolved(false)}
+          />
+        )}
+
         {state?.error && (
           <Notice key={state.error} variant="error">
             {state.error}
@@ -45,11 +61,15 @@ export function ForgotPasswordForm({ next = "/" }: { next?: string }) {
           <Button
             type="submit"
             variant="primary"
-            disabled={pending}
+            disabled={pending || !captchaOk}
             className="group w-full"
           >
-            {pending ? "Sending code…" : "Send reset code"}
-            {!pending && (
+            {pending
+              ? "Sending code…"
+              : captchaOk
+                ? "Send reset code"
+                : "Complete verification first"}
+            {!pending && captchaOk && (
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             )}
           </Button>

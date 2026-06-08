@@ -35,6 +35,17 @@ const resetSchema = z.object({
   password: z.string().min(1, "Password is required."),
 });
 
+/**
+ * The Cloudflare Turnstile token a form injected (`cf-turnstile-response`), if
+ * any. Forwarded to Supabase as `captchaToken` so GoTrue's built-in CAPTCHA
+ * protection (Auth → Settings → Enable Captcha protection) is satisfied. When
+ * Supabase CAPTCHA is off, the field is simply ignored, so passing it is safe
+ * either way.
+ */
+function captchaToken(formData: FormData): string | undefined {
+  return (formData.get("cf-turnstile-response") as string | null) || undefined;
+}
+
 /** Resolve the public origin for OAuth redirects. */
 async function getOrigin(): Promise<string> {
   if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
@@ -57,7 +68,10 @@ export async function signIn(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { error } = await supabase.auth.signInWithPassword({
+    ...parsed.data,
+    options: { captchaToken: captchaToken(formData) },
+  });
   if (error) return { error: error.message };
 
   const next = safeNextPath(formData.get("next") as string | null);
@@ -90,7 +104,10 @@ export async function signUp(
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
-    options: { emailRedirectTo: `${origin}/auth/callback` },
+    options: {
+      emailRedirectTo: `${origin}/auth/callback`,
+      captchaToken: captchaToken(formData),
+    },
   });
   // Some Supabase setups surface duplicates as an explicit error.
   if (error) {
@@ -175,7 +192,11 @@ export async function resendCode(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.resend({ type: "signup", email });
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: { captchaToken: captchaToken(formData) },
+  });
   if (error) return { error: error.message };
 
   return { notice: "A new code is on its way — check your inbox." };
@@ -204,6 +225,7 @@ export async function requestPasswordReset(
   // `redirectTo` powers the optional magic-link fallback in the reset email.
   await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/callback`,
+    captchaToken: captchaToken(formData),
   });
 
   const next = safeNextPath(formData.get("next") as string | null);
@@ -282,6 +304,7 @@ export async function resendResetCode(
   const origin = await getOrigin();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/callback`,
+    captchaToken: captchaToken(formData),
   });
   if (error) return { error: error.message };
 
