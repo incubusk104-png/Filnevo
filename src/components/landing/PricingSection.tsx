@@ -70,7 +70,7 @@ export default function PricingSection() {
                 </span>
                 <span className="text-text-muted text-xs ml-2">/ month</span>
               </div>
-              <Button variant="outline" href="/login?mode=signup">
+              <Button variant="outline" href="/login?mode=signup" className="w-full">
                 Start Free Trial
               </Button>
             </div>

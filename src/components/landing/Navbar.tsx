@@ -1,5 +1,6 @@
 import { Logo } from "@/components/shared/Logo";
 import NavAuth from "@/components/landing/NavAuth";
+import MobileMenu from "@/components/landing/MobileMenu";
 
 export default function Navbar() {
   return (
@@ -36,7 +37,10 @@ export default function Navbar() {
         </div>
 
         {/* Auth actions — reflects the signed-in session */}
-        <NavAuth />
+        <div className="flex items-center gap-2">
+          <NavAuth />
+          <MobileMenu />
+        </div>
       </nav>
     </header>
   );

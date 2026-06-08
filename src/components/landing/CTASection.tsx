@@ -30,16 +30,16 @@ export default function CTASection() {
         </p>
 
         {/* Live metrics ticker */}
-        <div className="mb-10 flex items-center justify-center space-x-6 text-text-muted">
+        <div className="mb-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-text-muted">
           <div className="flex items-center space-x-2 animate-metric-pulse">
             <div className="w-2 h-2 bg-velocity-blue rounded-full" />
             <span className="text-xs font-metrics">Live: 1,247 req/sec</span>
           </div>
-          <div className="w-1 h-[20px] bg-neutral-700/30" />
+          <div className="hidden sm:block w-1 h-[20px] bg-neutral-700/30" />
           <div className="flex items-center space-x-2">
             <span className="text-xs">Avg response: 89ms</span>
           </div>
-          <div className="w-1 h-[20px] bg-neutral-700/30" />
+          <div className="hidden sm:block w-1 h-[20px] bg-neutral-700/30" />
           <div className="flex items-center space-x-2">
             <span className="text-xs">Uptime: 99.95%</span>
           </div>
@@ -56,7 +56,7 @@ export default function CTASection() {
         </div>
 
         {/* Trust indicators */}
-        <div className="mt-16 flex items-center justify-center space-x-8 text-text-muted">
+        <div className="mt-16 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-text-muted">
           <div className="flex items-center space-x-3">
             <div className="w-4 h-4 bg-efficiency-green/20 rounded-full flex items-center justify-center">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -65,7 +65,7 @@ export default function CTASection() {
             </div>
             <span className="text-xs">Trusted by 500+ businesses</span>
           </div>
-          <div className="w-1 h-[24px] bg-neutral-700/30" />
+          <div className="hidden sm:block w-1 h-[24px] bg-neutral-700/30" />
           <div className="flex items-center space-x-3">
             <div className="w-4 h-4 bg-insight-cyan/20 rounded-full flex items-center justify-center">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -74,7 +74,7 @@ export default function CTASection() {
             </div>
             <span className="text-xs">98% customer satisfaction</span>
           </div>
-          <div className="w-1 h-[24px] bg-neutral-700/30" />
+          <div className="hidden sm:block w-1 h-[24px] bg-neutral-700/30" />
           <div className="flex items-center space-x-3">
             <div className="w-4 h-4 bg-velocity-blue/20 rounded-full flex items-center justify-center">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
