@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { ArrowLeft, Check, Lock, X } from "lucide-react";
+import { ArrowLeft, Check, Lock, LogIn, X } from "lucide-react";
 import {
   signIn,
   signInWithGoogle,
@@ -146,8 +146,9 @@ export function LoginForm({ signupMode = false }: { signupMode?: boolean }) {
         )}
 
         <div className="flex gap-3 pt-1">
-          {/* Primary action for the current mode, paired with a Back control
-              that returns to the landing page. */}
+          {/* Primary action for the current mode. The secondary control differs
+              by mode: sign-in offers Back (→ landing); sign-up offers Sign In,
+              which navigates to the dedicated sign-in page (/login). */}
           <button
             formAction={signupMode ? signUpAction : signInAction}
             disabled={pending}
@@ -161,13 +162,23 @@ export function LoginForm({ signupMode = false }: { signupMode?: boolean }) {
                 ? "Signing in…"
                 : "Sign In"}
           </button>
-          <a
-            href="/"
-            className="group flex flex-1 items-center justify-center gap-1.5 rounded-md border border-neutral-700 bg-neutral-900/40 px-4 py-2.5 font-metrics text-sm font-semibold text-neutral-100 transition-colors hover:border-insight-cyan/60 hover:text-insight-cyan"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            Back
-          </a>
+          {signupMode ? (
+            <a
+              href="/login"
+              className="group flex flex-1 items-center justify-center gap-1.5 rounded-md border border-neutral-700 bg-neutral-900/40 px-4 py-2.5 font-metrics text-sm font-semibold text-neutral-100 transition-colors hover:border-insight-cyan/60 hover:text-insight-cyan"
+            >
+              <LogIn className="h-4 w-4" />
+              Sign In
+            </a>
+          ) : (
+            <a
+              href="/"
+              className="group flex flex-1 items-center justify-center gap-1.5 rounded-md border border-neutral-700 bg-neutral-900/40 px-4 py-2.5 font-metrics text-sm font-semibold text-neutral-100 transition-colors hover:border-insight-cyan/60 hover:text-insight-cyan"
+            >
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+              Back
+            </a>
+          )}
         </div>
 
         <p className="flex items-center justify-center gap-1.5 pt-1 font-body text-[11px] text-text-faint">
