@@ -4,6 +4,8 @@ import { safeNextPath } from "@/lib/auth/next";
 import { Logo } from "@/components/shared/Logo";
 import { LoginForm } from "./LoginForm";
 import { VerifyForm } from "./VerifyForm";
+import { ForgotPasswordForm } from "./ForgotPasswordForm";
+import { ResetPasswordForm } from "./ResetPasswordForm";
 
 // Reads searchParams (dynamic) — required to run on Edge for Cloudflare Pages.
 export const runtime = "edge";
@@ -31,6 +33,12 @@ export default async function LoginPage({
   // function — keeping the Cloudflare Worker bundle under the size limit.
   const verifyMode = step === "verify";
   if (verifyMode && !email) redirect("/login?mode=signup");
+
+  // Password recovery shares this route too (same single-Edge-function reason),
+  // split into two steps: request a code (`forgot`) then set a new one (`reset`).
+  const forgotMode = step === "forgot";
+  const resetMode = step === "reset";
+  if (resetMode && !email) redirect("/login?step=forgot");
 
   return (
     <main className="relative grid min-h-dvh place-items-center overflow-hidden px-4 py-10">
@@ -66,6 +74,47 @@ export default async function LoginPage({
             )}
 
             <VerifyForm email={email as string} next={safeNext} />
+          </>
+        ) : forgotMode ? (
+          <>
+            <h1 className="mt-6 font-heading text-2xl font-bold tracking-tight text-foreground">
+              Reset your password
+            </h1>
+            <p className="mt-1.5 font-body text-sm text-text-muted">
+              Enter your account email and we&apos;ll send a 6-digit
+              verification code to reset your password.
+            </p>
+
+            {!configured && (
+              <p className="mt-4 flex items-center gap-2 rounded-md border border-hairline bg-neutral-900/50 px-3 py-2 font-body text-xs text-text-muted">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning-amber" />
+                Demo mode — password reset is simulated until Supabase is
+                configured.
+              </p>
+            )}
+
+            <ForgotPasswordForm next={safeNext} />
+          </>
+        ) : resetMode ? (
+          <>
+            <h1 className="mt-6 font-heading text-2xl font-bold tracking-tight text-foreground">
+              Set a new password
+            </h1>
+            <p className="mt-1.5 font-body text-sm text-text-muted">
+              Enter the 6-digit code we sent to{" "}
+              <span className="text-neutral-200">{email}</span> and choose a new
+              password for your account.
+            </p>
+
+            {!configured && (
+              <p className="mt-4 flex items-center gap-2 rounded-md border border-hairline bg-neutral-900/50 px-3 py-2 font-body text-xs text-text-muted">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning-amber" />
+                Demo mode — any 6-digit code is accepted until Supabase is
+                configured.
+              </p>
+            )}
+
+            <ResetPasswordForm email={email as string} next={safeNext} />
           </>
         ) : (
           <>

@@ -93,8 +93,19 @@ export function LoginForm({
         </label>
 
         <label className="block">
-          <span className="font-metrics text-[11px] font-medium uppercase tracking-[0.16em] text-text-muted">
-            Password
+          <span className="flex items-center justify-between">
+            <span className="font-metrics text-[11px] font-medium uppercase tracking-[0.16em] text-text-muted">
+              Password
+            </span>
+            {!signupMode && (
+              <Link
+                href={`/login?step=forgot${nextQuery}`}
+                prefetch
+                className="font-metrics text-[11px] font-medium text-insight-cyan transition-colors hover:text-insight-cyan/80"
+              >
+                Forgot password?
+              </Link>
+            )}
           </span>
           <input
             name="password"

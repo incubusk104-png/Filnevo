@@ -26,6 +26,15 @@ const verifySchema = z.object({
     .regex(/^\d{6}$/, "Enter the 6-digit code from your email."),
 });
 
+const resetSchema = z.object({
+  email: z.string().trim().email("Enter a valid email address."),
+  token: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, "Enter the 6-digit code from your email."),
+  password: z.string().min(1, "Password is required."),
+});
+
 /** Resolve the public origin for OAuth redirects. */
 async function getOrigin(): Promise<string> {
   if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
@@ -167,6 +176,113 @@ export async function resendCode(
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resend({ type: "signup", email });
+  if (error) return { error: error.message };
+
+  return { notice: "A new code is on its way — check your inbox." };
+}
+
+/**
+ * Step 1 of password recovery: email the user a 6-digit reset code.
+ *
+ * We always redirect to the reset step regardless of whether the address
+ * belongs to a real account — surfacing "user not found" here would let an
+ * attacker enumerate registered emails. Supabase silently no-ops for unknown
+ * addresses, so no code arrives and the flow simply can't be completed.
+ */
+export async function requestPasswordReset(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!z.string().email().safeParse(email).success) {
+    return { error: "Enter a valid email address." };
+  }
+
+  const supabase = await createClient();
+  const origin = await getOrigin();
+  // Ignore the result: never reveal whether the email is registered. The
+  // `redirectTo` powers the optional magic-link fallback in the reset email.
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/callback`,
+  });
+
+  const next = safeNextPath(formData.get("next") as string | null);
+  const resetUrl =
+    `/login?step=reset&email=${encodeURIComponent(email)}` +
+    (next !== "/" ? `&next=${encodeURIComponent(next)}` : "");
+  redirect(resetUrl);
+}
+
+/**
+ * Step 2 of password recovery: verify the emailed code and set a new password.
+ *
+ * `verifyOtp({ type: "recovery" })` exchanges the code for a session, after
+ * which `updateUser` can change the password for that now-authenticated user.
+ */
+export async function resetPassword(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const parsed = resetSchema.safeParse({
+    email: formData.get("email"),
+    token: formData.get("token"),
+    password: formData.get("password"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  // Enforce the shared password policy server-side (never trust the client).
+  const strength = checkPassword(parsed.data.password);
+  if (!strength.ok) {
+    return {
+      error: `Password too weak — ${strength.firstUnmet ?? "does not meet requirements"}.`,
+    };
+  }
+
+  // Human-verification gate (Cloudflare Turnstile). No-ops in demo mode.
+  const h = await headers();
+  const captchaOk = await verifyTurnstile(
+    formData.get("cf-turnstile-response") as string | null,
+    h.get("cf-connecting-ip"),
+  );
+  if (!captchaOk) {
+    return { error: "Captcha verification failed. Please try again." };
+  }
+
+  const supabase = await createClient();
+  const { error: otpError } = await supabase.auth.verifyOtp({
+    email: parsed.data.email,
+    token: parsed.data.token,
+    type: "recovery",
+  });
+  if (otpError) return { error: otpError.message };
+
+  const { error: updateError } = await supabase.auth.updateUser({
+    password: parsed.data.password,
+  });
+  if (updateError) return { error: updateError.message };
+
+  const next = safeNextPath(formData.get("next") as string | null);
+  revalidatePath("/", "layout");
+  redirect(next);
+}
+
+/** Re-send the password-reset code (used from the reset step). */
+export async function resendResetCode(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!z.string().email().safeParse(email).success) {
+    return { error: "Enter a valid email address." };
+  }
+
+  const supabase = await createClient();
+  const origin = await getOrigin();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/callback`,
+  });
   if (error) return { error: error.message };
 
   return { notice: "A new code is on its way — check your inbox." };

@@ -62,6 +62,8 @@ interface MockSupabaseClient {
     signInWithOAuth: (...args: any[]) => Promise<{ data: { url: string | null }; error: any }>;
     verifyOtp: (...args: any[]) => Promise<MockResponse>;
     resend: (...args: any[]) => Promise<MockResponse>;
+    resetPasswordForEmail: (...args: any[]) => Promise<MockResponse>;
+    updateUser: (...args: any[]) => Promise<MockResponse>;
     exchangeCodeForSession: (...args: any[]) => Promise<MockResponse>;
     signOut: (...args: any[]) => Promise<{ error: any }>;
     getUser: (...args: any[]) => Promise<{ data: { user: any }; error: any }>;
@@ -80,6 +82,9 @@ export const createMockSupabaseClient = (): MockSupabaseClient => {
       // Demo mode accepts any code so the verification step is demoable.
       verifyOtp: async () => ({ data: { user: null, session: null }, error: null }),
       resend: async () => ({ data: {}, error: null }),
+      // Demo mode: pretend the reset email was sent / the password was changed.
+      resetPasswordForEmail: async () => ({ data: {}, error: null }),
+      updateUser: async () => ({ data: { user: null }, error: null }),
       exchangeCodeForSession: async () => ({ data: { session: null }, error: null }),
       signOut: async () => ({ error: null }),
       // Demo mode has no real session; surface a stable demo user so
