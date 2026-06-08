@@ -41,14 +41,6 @@ export function LoginForm({
   const [googleState, googleAction, googlePending] = useActionState<AuthState, FormData>(signInWithGoogle, null);
 
   const [password, setPassword] = useState("");
-  const [showRules, setShowRules] = useState(signupMode);
-  // Cloudflare Turnstile token state. Submitted via the injected
-  // `cf-turnstile-response` field and forwarded to Supabase as `captchaToken`,
-  // satisfying GoTrue's CAPTCHA protection. Gating the submit until it solves
-  // avoids the "request disallowed (no captcha_token found)" error. When
-  // Turnstile isn't configured, the gate is bypassed so the form still works.
-  const [captchaSolved, setCaptchaSolved] = useState(false);
-  const captchaOk = !TURNSTILE_ENABLED || captchaSolved;
 
   // OAuth navigation happens client-side: the server action returns the Google
   // authorization URL (redirecting to an external URL from within a Server
@@ -62,10 +54,11 @@ export function LoginForm({
   const error = signInState?.error ?? signUpState?.error ?? googleState?.error;
   const notice = signUpState?.notice;
   const pending = signingIn || signingUp || googlePending;
-  const submitDisabled = pending || !captchaOk;
 
   const strength = checkPassword(password);
-  const showMeter = showRules || password.length > 0;
+  // Only surface the strength meter while the typed password fails the policy.
+  // It stays hidden when empty and disappears once every rule is satisfied.
+  const showMeter = password.length > 0 && !strength.ok;
 
   return (
     <div className="mt-7 space-y-4">
@@ -128,7 +121,6 @@ export function LoginForm({
             autoComplete={signupMode ? "new-password" : "current-password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            onFocus={() => setShowRules(true)}
             className="form-input mt-1.5 text-sm"
             placeholder="Enter your password"
           />
@@ -170,14 +162,12 @@ export function LoginForm({
           </div>
         )}
 
-        {/* Human-verification gate (Cloudflare Turnstile). Its token is
-            forwarded to Supabase Auth, which enforces CAPTCHA protection. */}
+        {/* Cloudflare Turnstile. It auto-injects the `cf-turnstile-response`
+            field (forwarded to Supabase as `captchaToken`) when it solves, but
+            we don't block the submit on it — a widget that fails to load on a
+            given domain should never leave the button permanently disabled. */}
         {TURNSTILE_ENABLED && (
-          <Turnstile
-            action={signupMode ? "signup" : "signin"}
-            onVerify={() => setCaptchaSolved(true)}
-            onExpire={() => setCaptchaSolved(false)}
-          />
+          <Turnstile action={signupMode ? "signup" : "signin"} />
         )}
 
         {error && (
@@ -196,21 +186,17 @@ export function LoginForm({
           <Button
             variant="primary"
             formAction={signupMode ? signUpAction : signInAction}
-            disabled={submitDisabled}
+            disabled={pending}
             className="group w-full"
           >
             {signupMode
               ? signingUp
                 ? "Creating account…"
-                : captchaOk
-                  ? "Create account"
-                  : "Complete verification first"
+                : "Create account"
               : signingIn
                 ? "Signing in…"
-                : captchaOk
-                  ? "Sign In"
-                  : "Complete verification first"}
-            {!pending && captchaOk && (
+                : "Sign In"}
+            {!pending && (
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             )}
           </Button>
