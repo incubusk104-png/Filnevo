@@ -1,24 +1,42 @@
-# Supabase email templates
+# Supabase auth email templates
 
-Branded HTML for the transactional emails Supabase Auth sends. These are
-email-client-safe (table layout + inline styles only).
+Filnevo's sign-up flow uses a **6-digit verification code** (OTP), not a magic
+link: after `supabase.auth.signUp(...)` the app sends the user to the in-app
+Verify screen, which calls `supabase.auth.verifyOtp({ type: "signup" })`.
 
-## `confirm-signup.html` — manual sign-up verification code
+For that to work, the **Confirm signup** email must show the code
+(`{{ .Token }}`). Supabase's default template only renders a
+`{{ .ConfirmationURL }}` link, which is why the email arrived branded
+"Supabase Auth" with a confirm link and no code.
 
-This is the email a new user receives after submitting the sign-up form. It
-shows the 6-digit code that the **`/login/verify`** page asks for.
+## Apply the Filnevo template
 
-### How to apply
+1. Supabase Dashboard → **Authentication → Emails → Confirm signup**.
+2. Set **Subject** to e.g. `Your Filnevo verification code`.
+3. Open the **Message body** source editor and paste the contents of
+   [`confirm-signup.html`](./confirm-signup.html).
+4. Save. Send yourself a test sign-up to confirm the code renders.
 
-1. Supabase dashboard → **Authentication → Providers → Email**: turn
-   **"Confirm email" ON** (otherwise Supabase logs the user in immediately at
-   sign-up and the verify step is skipped).
-2. Supabase dashboard → **Authentication → Email Templates → "Confirm signup"**.
-3. Paste the contents of `confirm-signup.html` into the message body.
-4. Keep the **`{{ .Token }}`** variable — it renders the 6-digit code. (The
-   default Supabase template ships `{{ .ConfirmationURL }}` for a magic link;
-   our flow is code-based, so the token is what matters.)
-5. Save. Send yourself a test sign-up to confirm delivery.
+> The template keeps a `{{ .ConfirmationURL }}` fallback link as well, so either
+> the code **or** the link will confirm the address.
 
-> Tip: for reliable production delivery, configure custom SMTP under
-> **Authentication → SMTP Settings** (e.g. Resend / SendGrid).
+## Sender identity (remove the "Supabase Auth" branding)
+
+The "Supabase Auth · noreply@mail.app.supabase.io" sender comes from Supabase's
+shared SMTP. To send as Filnevo, configure **custom SMTP** in
+**Authentication → Emails → SMTP Settings** (set sender name `Filnevo` and your
+own from-address/domain). Custom SMTP is required for production-grade delivery.
+
+## Remove demo notices
+
+The in-app "Demo mode" notices are conditional and disappear automatically once
+the relevant service is configured:
+
+- **Supabase** notices (`Demo mode — sign-in is simulated…`) hide when
+  `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` (and the
+  server-side `SUPABASE_URL` / `SUPABASE_ANON_KEY`) are set.
+- The **Turnstile** "Verification (demo) — CAPTCHA auto-approved…" notice hides
+  once `NEXT_PUBLIC_TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` are set.
+
+Set these as environment variables in the Cloudflare Pages project (Production
++ Preview) and redeploy.

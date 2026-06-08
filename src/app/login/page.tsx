@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { safeNextPath } from "@/lib/auth/next";
 import { Logo } from "@/components/shared/Logo";
 import { LoginForm } from "./LoginForm";
 import { VerifyForm } from "./VerifyForm";
@@ -15,11 +16,15 @@ export default async function LoginPage({
     mode?: string;
     step?: string;
     email?: string;
+    next?: string;
   }>;
 }) {
-  const { error, mode, step, email } = await searchParams;
+  const { error, mode, step, email, next } = await searchParams;
   const configured = isSupabaseConfigured();
   const signupMode = mode === "signup";
+  // Post-auth destination (e.g. the plan the visitor tried to pay for before
+  // being asked to sign in). Sanitized again server-side in the auth actions.
+  const safeNext = safeNextPath(next);
 
   // The email verification step is rendered on this same route (rather than a
   // dedicated /login/verify page) so the auth flow ships as a single Edge
@@ -60,7 +65,7 @@ export default async function LoginPage({
               </p>
             )}
 
-            <VerifyForm email={email as string} />
+            <VerifyForm email={email as string} next={safeNext} />
           </>
         ) : (
           <>
@@ -85,7 +90,7 @@ export default async function LoginPage({
               </p>
             )}
 
-            <LoginForm signupMode={signupMode} />
+            <LoginForm signupMode={signupMode} next={safeNext} />
           </>
         )}
       </div>

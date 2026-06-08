@@ -7,6 +7,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { checkPassword } from "@/lib/auth/password";
 import { verifyTurnstile } from "@/lib/captcha/turnstile";
+import { safeNextPath } from "@/lib/auth/next";
 
 export type AuthState =
   | { error?: string; notice?: string; redirectTo?: string }
@@ -50,8 +51,9 @@ export async function signIn(
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { error: error.message };
 
+  const next = safeNextPath(formData.get("next") as string | null);
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect(next);
 }
 
 export async function signUp(
@@ -83,17 +85,21 @@ export async function signUp(
   });
   if (error) return { error: error.message };
 
+  const next = safeNextPath(formData.get("next") as string | null);
+
   // Email confirmation disabled — a session is returned immediately.
   if (data.session) {
     revalidatePath("/", "layout");
-    redirect("/");
+    redirect(next);
   }
 
   // Otherwise Supabase emailed a verification code. Move to the verify step
-  // where the user enters that code to activate the account.
-  redirect(
-    `/login?step=verify&email=${encodeURIComponent(parsed.data.email)}`,
-  );
+  // where the user enters that code to activate the account, carrying the
+  // post-auth destination through so they land where they intended.
+  const verifyUrl =
+    `/login?step=verify&email=${encodeURIComponent(parsed.data.email)}` +
+    (next !== "/" ? `&next=${encodeURIComponent(next)}` : "");
+  redirect(verifyUrl);
 }
 
 export async function verifyEmail(
@@ -126,8 +132,9 @@ export async function verifyEmail(
   });
   if (error) return { error: error.message };
 
+  const next = safeNextPath(formData.get("next") as string | null);
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect(next);
 }
 
 export async function resendCode(
@@ -148,14 +155,15 @@ export async function resendCode(
 
 export async function signInWithGoogle(
   _prev: AuthState,
-  _formData: FormData,
+  formData: FormData,
 ): Promise<AuthState> {
   const supabase = await createClient();
   const origin = await getOrigin();
+  const next = safeNextPath(formData.get("next") as string | null);
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${origin}/auth/callback?next=/`,
+      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
       // Don't let supabase-js redirect server-side; we hand the URL back to the
       // client to navigate. Redirecting to an external URL via Next's
       // `redirect()` inside a Server Action 500s on the Cloudflare Edge runtime.

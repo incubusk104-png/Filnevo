@@ -25,7 +25,13 @@ function StepBadge({ n, done }: { n: number; done?: boolean }) {
   );
 }
 
-export function VerifyForm({ email }: { email: string }) {
+export function VerifyForm({
+  email,
+  next = "/",
+}: {
+  email: string;
+  next?: string;
+}) {
   const [verifyState, verifyAction, verifying] = useActionState<AuthState, FormData>(
     verifyEmail,
     null,
@@ -44,6 +50,7 @@ export function VerifyForm({ email }: { email: string }) {
     <div className="mt-7 space-y-4">
       <form action={verifyAction} className="space-y-5">
         <input type="hidden" name="email" value={email} />
+        <input type="hidden" name="next" value={next} />
 
         {/* Step 1 — human verification (must pass before the code is accepted) */}
         <div className="space-y-2">

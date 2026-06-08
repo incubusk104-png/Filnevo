@@ -22,7 +22,14 @@ const METER_COLORS = [
   "bg-efficiency-green",
 ];
 
-export function LoginForm({ signupMode = false }: { signupMode?: boolean }) {
+export function LoginForm({
+  signupMode = false,
+  next = "/",
+}: {
+  signupMode?: boolean;
+  next?: string;
+}) {
+  const nextQuery = next !== "/" ? `&next=${encodeURIComponent(next)}` : "";
   const [signInState, signInAction, signingIn] = useActionState<AuthState, FormData>(signIn, null);
   const [signUpState, signUpAction, signingUp] = useActionState<AuthState, FormData>(signUp, null);
   const [googleState, googleAction, googlePending] = useActionState<AuthState, FormData>(signInWithGoogle, null);
@@ -50,6 +57,7 @@ export function LoginForm({ signupMode = false }: { signupMode?: boolean }) {
     <div className="mt-7 space-y-4">
       {/* Google OAuth */}
       <form action={googleAction}>
+        <input type="hidden" name="next" value={next} />
         <button
           type="submit"
           disabled={pending}
@@ -69,6 +77,7 @@ export function LoginForm({ signupMode = false }: { signupMode?: boolean }) {
       </div>
 
       <form className="space-y-4">
+        <input type="hidden" name="next" value={next} />
         <label className="block">
           <span className="font-metrics text-[11px] font-medium uppercase tracking-[0.16em] text-text-muted">
             Email
@@ -174,7 +183,11 @@ export function LoginForm({ signupMode = false }: { signupMode?: boolean }) {
         <p className="text-center font-body text-sm text-text-muted">
           {signupMode ? "Already have an account? " : "New to Filnevo? "}
           <Link
-            href={signupMode ? "/login" : "/login?mode=signup"}
+            href={
+              signupMode
+                ? `/login${nextQuery ? `?${nextQuery.slice(1)}` : ""}`
+                : `/login?mode=signup${nextQuery}`
+            }
             prefetch
             className="auth-toggle-link"
           >
