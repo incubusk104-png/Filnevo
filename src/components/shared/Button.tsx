@@ -20,7 +20,7 @@ export const Button = forwardRef<
 }, ref) => {
   const Component = (href || asChild ? "a" : "button") as React.ElementType;
 
-  const baseClasses = "btn-anim inline-flex items-center justify-center gap-2 rounded-md font-metrics font-medium transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 disabled:hover:translate-y-0";
+  const baseClasses = "btn-anim inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-md font-metrics font-medium transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 disabled:hover:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
 
   const variantClasses = {
     primary: `
@@ -40,10 +40,12 @@ export const Button = forwardRef<
     `
   };
 
+  // Min-heights keep every variant within (or above) the 44px touch-target
+  // guideline on mobile while staying compact on dense desktop layouts.
   const sizeClasses = {
-    sm: "px-3 py-2 text-sm",
-    md: "px-4 py-3 text-sm",
-    lg: "px-6 py-4 text-base"
+    sm: "min-h-[2.5rem] px-3 py-2 text-sm",
+    md: "min-h-[2.75rem] px-4 py-3 text-sm",
+    lg: "min-h-[3.25rem] px-6 py-4 text-base"
   };
 
   return (

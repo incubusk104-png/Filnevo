@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   Bricolage_Grotesque,
   Hanken_Grotesk,
@@ -39,6 +39,14 @@ export const metadata: Metadata = {
   title: "Filnevo — Automate Your BIR Tax Compliance",
   description:
     "From zero-entry document capture to automated BIR form filling, Filnevo delivers accurate, on-time tax filings — saving you hours every month.",
+};
+
+// Ensures correct mobile scaling and lets the layout extend under device
+// notches/safe-areas while still allowing users to pinch-zoom (accessibility).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

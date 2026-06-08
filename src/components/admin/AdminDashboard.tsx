@@ -206,7 +206,7 @@ export default function AdminDashboard() {
           />
           <button
             onClick={() => loadUsers(search).catch(() => {})}
-            className="rounded-xl border border-neutral-800/50 px-4 py-2.5 font-data text-sm text-neutral-200 hover:border-velocity-blue/60"
+            className="btn-anim press-effect shrink-0 rounded-xl border border-neutral-800/50 px-4 py-2.5 font-data text-sm text-neutral-200 transition-all duration-200 hover:-translate-y-0.5 hover:border-velocity-blue/60 hover:bg-neutral-900/60 hover:shadow-md hover:shadow-black/30"
           >
             Search
           </button>
@@ -277,10 +277,10 @@ export default function AdminDashboard() {
                       onClick={() =>
                         patchUser(u.id, { is_platform_admin: !u.is_platform_admin })
                       }
-                      className={`rounded-lg border px-2 py-1 text-xs ${
+                      className={`press-effect rounded-lg border px-2 py-1 text-xs transition-colors disabled:opacity-50 ${
                         u.is_platform_admin
-                          ? "border-insight-cyan/50 text-insight-cyan"
-                          : "border-neutral-800/50 text-text-muted"
+                          ? "border-insight-cyan/50 text-insight-cyan hover:bg-insight-cyan/10"
+                          : "border-neutral-800/50 text-text-muted hover:border-velocity-blue/50 hover:text-neutral-200"
                       }`}
                     >
                       {u.is_platform_admin ? "admin" : "make admin"}

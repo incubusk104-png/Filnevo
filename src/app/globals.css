@@ -280,6 +280,28 @@ body {
   @apply transform scale-[0.98];
 }
 
+/* Global tactile feedback — every interactive control gets a smooth, purposeful
+   transition and a subtle "press" on tap/click so nothing reads as flat or
+   instant. Duration stays in the 150–200ms band recommended for UI motion.
+   Native buttons cover most controls; anchor-styled CTAs opt in via the shared
+   <Button> / .press-effect. Disabled controls and reduced-motion users are
+   excluded. */
+@media (prefers-reduced-motion: no-preference) {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    transition:
+      color 0.2s ease,
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active {
+    transform: scale(0.97);
+  }
+}
+
 /* Scroll behavior */
 html {
   scroll-behavior: smooth;
@@ -571,4 +593,16 @@ html {
   .notice-in::before { animation: none; transform: scaleY(1); }
   .btn-anim::after { display: none; }
   .auth-toggle-link::after { transition: none; }
+
+  /* Honour the OS "reduce motion" setting for hover lifts and tap presses:
+     keep the colour/shadow feedback, drop the movement. */
+  .press-effect,
+  .scale-on-hover { transition: none; }
+  .press-effect:active,
+  .scale-on-hover:hover { transform: none; }
+  .metrics-container:hover,
+  .data-card:hover { transform: none; }
+  .animate-metric-pulse,
+  .animate-data-flow::after,
+  .animate-insight-glow { animation: none; }
 }

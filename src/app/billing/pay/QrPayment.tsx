@@ -159,7 +159,7 @@ export function QrPayment({ tier, label }: QrPaymentProps) {
             {error}
             <button
               onClick={regenerate}
-              className="mt-3 block w-full rounded-md bg-velocity-blue px-4 py-2 text-sm font-medium text-neutral-50 hover:bg-velocity-blue/90"
+              className="btn-anim press-effect mt-3 block w-full rounded-md bg-velocity-blue px-4 py-2.5 text-sm font-medium text-neutral-50 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-velocity-blue/90 hover:shadow-lg hover:shadow-velocity-blue/30"
             >
               Try again
             </button>
@@ -217,7 +217,7 @@ export function QrPayment({ tier, label }: QrPaymentProps) {
             {expired && (
               <button
                 onClick={regenerate}
-                className="mt-3 rounded-md bg-velocity-blue px-4 py-2 text-sm font-medium text-neutral-50 hover:bg-velocity-blue/90"
+                className="btn-anim press-effect mt-3 rounded-md bg-velocity-blue px-4 py-2.5 text-sm font-medium text-neutral-50 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-velocity-blue/90 hover:shadow-lg hover:shadow-velocity-blue/30"
               >
                 Generate a new QR
               </button>
@@ -227,9 +227,9 @@ export function QrPayment({ tier, label }: QrPaymentProps) {
             <a
               href={data.qrImageUrl}
               download={`filnevo-${tier}-qrph.png`}
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md border border-neutral-700 bg-neutral-900/30 px-4 py-2.5 text-sm font-medium text-neutral-100 hover:bg-neutral-800/30"
+              className="btn-anim press-effect group mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md border border-neutral-700 bg-neutral-900/30 px-4 py-2.5 text-sm font-medium text-neutral-100 transition-all duration-200 hover:-translate-y-0.5 hover:border-velocity-blue/50 hover:bg-neutral-800/40 hover:shadow-md hover:shadow-black/30"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transition-transform duration-200 group-hover:translate-y-0.5">
                 <path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Download QR image
