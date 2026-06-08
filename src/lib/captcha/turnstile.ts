@@ -4,18 +4,16 @@
 // server action that wants to gate an action behind a human-verification
 // challenge calls `verifyTurnstile(token)` before proceeding.
 //
-// Demo mode: when `TURNSTILE_SECRET_KEY` is unset the verification short-
-// circuits to success, so the flow works locally / in previews without keys
-// (mirroring how Supabase and PayMongo degrade gracefully). The matching
-// client widget (`<Turnstile />`) emits a `"demo-bypass"` token in that case.
+// There is no demo bypass: verification always goes through Cloudflare. If the
+// secret key is not configured the check fails CLOSED (returns false) so a
+// misconfiguration can never silently let unverified traffic through. For local
+// development use Cloudflare's always-pass test keys
+// (site `1x00000000000000000000AA`, secret `1x0000000000000000000000000000000AA`).
 
 const SITEVERIFY_URL =
   "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
-/** Sentinel token emitted by the client widget when running in demo mode. */
-export const TURNSTILE_DEMO_TOKEN = "demo-bypass";
-
-/** True when a real Turnstile secret key is configured (production). */
+/** True when a real Turnstile secret key is configured. */
 export function isTurnstileConfigured(): boolean {
   return (
     typeof process !== "undefined" &&
@@ -32,20 +30,17 @@ interface SiteverifyResponse {
 /**
  * Verify a Turnstile token against Cloudflare's siteverify API.
  *
- * Returns `true` when the challenge is satisfied (or when running in demo
- * mode), `false` otherwise. Never throws — network/parse failures resolve to
- * `false` so callers can simply branch on the boolean.
+ * Returns `true` only when the challenge is satisfied. Fails closed: a missing
+ * secret, a missing token, or any network/parse failure resolves to `false`,
+ * so callers can simply branch on the boolean.
  */
 export async function verifyTurnstile(
   token: string | null | undefined,
   remoteIp?: string | null,
 ): Promise<boolean> {
-  // Demo mode: no secret configured → accept any (incl. the demo sentinel).
-  if (!isTurnstileConfigured()) return true;
-
+  // Fail closed when the secret is absent — never auto-approve.
+  if (!isTurnstileConfigured()) return false;
   if (!token || typeof token !== "string") return false;
-  // A real key is configured, so the demo sentinel is not acceptable.
-  if (token === TURNSTILE_DEMO_TOKEN) return false;
 
   const body = new FormData();
   body.append("secret", process.env.TURNSTILE_SECRET_KEY as string);

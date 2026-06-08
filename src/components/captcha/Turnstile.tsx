@@ -1,18 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { ShieldCheck } from "lucide-react";
-import { TURNSTILE_DEMO_TOKEN } from "@/lib/captcha/turnstile";
+import { ShieldAlert } from "lucide-react";
 
 // Reusable Cloudflare Turnstile CAPTCHA widget — the client half of the shared
 // verification "template". Drop it into any form (it injects a
 // `cf-turnstile-response` field for server actions) or read the token in JS via
 // the `onVerify` callback for fetch-based flows.
 //
-// Demo mode: when `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is unset, no real widget is
-// loaded — a small notice renders and a `"demo-bypass"` token is emitted so the
-// gated flow keeps working without keys. The server half accepts that token
-// only while its own secret is unset.
+// Verification is always real. If `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is missing
+// (e.g. not set as a build-time env var in Cloudflare Pages) the widget can't
+// render, so we surface a clear error and emit no token — the gated flow stays
+// locked rather than silently auto-approving.
 
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 const SCRIPT_SRC =
@@ -77,8 +76,6 @@ export interface TurnstileProps {
   onExpire?: () => void;
   /** Optional Turnstile action label (shows up in Cloudflare analytics). */
   action?: string;
-  /** Name for the hidden field submitted with a form (demo mode only). */
-  inputName?: string;
   theme?: "auto" | "light" | "dark";
   className?: string;
 }
@@ -87,13 +84,12 @@ export function Turnstile({
   onVerify,
   onExpire,
   action,
-  inputName = "cf-turnstile-response",
   theme = "auto",
   className,
 }: TurnstileProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
-  const demo = !SITE_KEY;
+  const missingKey = !SITE_KEY;
 
   const handleVerify = useCallback(
     (token: string) => onVerify?.(token),
@@ -102,11 +98,7 @@ export function Turnstile({
   const handleExpire = useCallback(() => onExpire?.(), [onExpire]);
 
   useEffect(() => {
-    if (demo) {
-      // No real widget — emit the demo token so the gated flow proceeds.
-      handleVerify(TURNSTILE_DEMO_TOKEN);
-      return;
-    }
+    if (missingKey) return; // nothing to render without a site key
 
     let cancelled = false;
     loadTurnstileScript()
@@ -138,17 +130,15 @@ export function Turnstile({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [demo]);
+  }, [missingKey]);
 
-  if (demo) {
+  if (missingKey) {
     return (
       <div className={className}>
-        <div className="flex items-center gap-2 rounded-md border border-hairline bg-neutral-900/50 px-3 py-2.5 font-body text-xs text-text-muted">
-          <ShieldCheck className="h-4 w-4 shrink-0 text-efficiency-green" />
-          Verification (demo) — CAPTCHA auto-approved until Cloudflare Turnstile
-          is configured.
+        <div className="flex items-center gap-2 rounded-md border border-alert-red/40 bg-alert-red/10 px-3 py-2.5 font-body text-xs text-alert-red">
+          <ShieldAlert className="h-4 w-4 shrink-0" />
+          Verification is temporarily unavailable. Please try again later.
         </div>
-        <input type="hidden" name={inputName} value={TURNSTILE_DEMO_TOKEN} readOnly />
       </div>
     );
   }

@@ -83,7 +83,26 @@ export async function signUp(
     password: parsed.data.password,
     options: { emailRedirectTo: `${origin}/auth/callback` },
   });
-  if (error) return { error: error.message };
+  // Some Supabase setups surface duplicates as an explicit error.
+  if (error) {
+    if (/already|registered|exists/i.test(error.message)) {
+      return {
+        error: "This email is already registered. Please sign in instead.",
+      };
+    }
+    return { error: error.message };
+  }
+
+  // To prevent email enumeration, Supabase returns a 200 with a "fake" user
+  // (empty `identities`) when the address already belongs to a confirmed
+  // account. Detect that and steer the user to sign in instead of leaving them
+  // waiting for a verification code that never comes.
+  const identities = data.user?.identities;
+  if (data.user && Array.isArray(identities) && identities.length === 0) {
+    return {
+      error: "This email is already registered. Please sign in instead.",
+    };
+  }
 
   const next = safeNextPath(formData.get("next") as string | null);
 
