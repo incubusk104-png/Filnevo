@@ -10,6 +10,7 @@ import {
 } from "./actions";
 import { checkPassword } from "@/lib/auth/password";
 import { Notice } from "@/components/ui/Notice";
+import { Button } from "@/components/shared/Button";
 
 // Strength meter colours mapped to the Precision Metrics status palette.
 const METER_COLORS = [
@@ -148,11 +149,15 @@ export function LoginForm({ signupMode = false }: { signupMode?: boolean }) {
         <div className="flex gap-3 pt-1">
           {/* Primary action for the current mode. The secondary control differs
               by mode: sign-in offers Back (→ landing); sign-up offers Sign In,
-              which navigates to the dedicated sign-in page (/login). */}
-          <button
+              which navigates to the dedicated sign-in page (/login). These reuse
+              the shared <Button> so they are identical to the navbar's
+              Sign In / Sign Up controls. */}
+          <Button
+            variant="primary"
+            size="sm"
             formAction={signupMode ? signUpAction : signInAction}
             disabled={pending}
-            className="flex-1 rounded-md bg-velocity-blue px-4 py-2.5 font-metrics text-sm font-semibold text-neutral-50 transition-all hover:bg-velocity-blue/90 active:scale-[0.98] disabled:opacity-50"
+            className="flex-1"
           >
             {signupMode
               ? signingUp
@@ -161,23 +166,17 @@ export function LoginForm({ signupMode = false }: { signupMode?: boolean }) {
               : signingIn
                 ? "Signing in…"
                 : "Sign In"}
-          </button>
+          </Button>
           {signupMode ? (
-            <a
-              href="/login"
-              className="group flex flex-1 items-center justify-center gap-1.5 rounded-md border border-neutral-700 bg-neutral-900/40 px-4 py-2.5 font-metrics text-sm font-semibold text-neutral-100 transition-colors hover:border-insight-cyan/60 hover:text-insight-cyan"
-            >
+            <Button variant="outline" size="sm" href="/login" className="flex-1">
               <LogIn className="h-4 w-4" />
               Sign In
-            </a>
+            </Button>
           ) : (
-            <a
-              href="/"
-              className="group flex flex-1 items-center justify-center gap-1.5 rounded-md border border-neutral-700 bg-neutral-900/40 px-4 py-2.5 font-metrics text-sm font-semibold text-neutral-100 transition-colors hover:border-insight-cyan/60 hover:text-insight-cyan"
-            >
+            <Button variant="outline" size="sm" href="/" className="group flex-1">
               <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
               Back
-            </a>
+            </Button>
           )}
         </div>
 

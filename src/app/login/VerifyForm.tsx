@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { ArrowLeft, Lock } from "lucide-react";
 import { Turnstile } from "@/components/captcha/Turnstile";
 import { Notice } from "@/components/ui/Notice";
+import { Button } from "@/components/shared/Button";
 import { resendCode, verifyEmail, type AuthState } from "./actions";
 
 // Step 2 of manual sign-up: the user enters the 6-digit code Supabase emailed.
@@ -87,13 +88,15 @@ export function VerifyForm({ email }: { email: string }) {
           </Notice>
         )}
 
-        <button
+        <Button
           type="submit"
+          variant="primary"
+          size="sm"
           disabled={busy || !captchaOk}
-          className="w-full rounded-md bg-velocity-blue px-4 py-2.5 font-metrics text-sm font-semibold text-neutral-50 transition-all hover:bg-velocity-blue/90 active:scale-[0.98] disabled:opacity-50"
+          className="w-full"
         >
           {verifying ? "Verifying…" : captchaOk ? "Verify email" : "Complete verification first"}
-        </button>
+        </Button>
       </form>
 
       <div className="flex items-center justify-between font-body text-[11px] text-text-muted">
