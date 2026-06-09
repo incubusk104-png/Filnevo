@@ -47,7 +47,7 @@ const SOLO_PLANS: Plan[] = [
     id: "free",
     name: "Free",
     tier: "free",
-    features: ["Mobile doc capture", "BIR deadline widget", "Gemini Flash (free tier)"],
+    features: ["Mobile doc capture", "BIR deadline widget", "AI document extraction"],
     cta: { kind: "link", href: "/login?mode=signup", label: "Start for free" },
     hook: "No card required",
   },
