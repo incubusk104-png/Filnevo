@@ -11,6 +11,20 @@ These templates are Filnevo-branded (logo in the upper-left, "Precision
 Metrics" colours) and surface the **verification code** prominently, with a
 fallback link where Supabase provides one.
 
+## Logo image
+
+The header logo is a hosted image (email clients block inline SVG/data URIs),
+referenced as `{{ .SiteURL }}/email-logo.png` in these templates and
+`${APP_URL}/email-logo.png` in the checkout confirmation email. To make it
+render:
+
+1. Add a transparent-background **PNG** (~240px wide) at
+   [`public/email-logo.png`](../../public/email-logo.png) in this repo, so it
+   serves from `https://<your-domain>/email-logo.png` after deploy.
+2. In Supabase → **Authentication → URL Configuration**, set **Site URL** to
+   your live domain (e.g. `https://filnevo.com`) so `{{ .SiteURL }}` resolves.
+3. If the image is missing, clients fall back to the `alt="Filnevo"` text.
+
 ## Templates → Supabase mapping
 
 Apply each file in **Dashboard → Authentication → Emails**, pasting the file's

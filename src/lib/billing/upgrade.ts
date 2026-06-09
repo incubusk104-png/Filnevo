@@ -7,6 +7,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { defaultQuotaForTier } from "@/lib/tiers";
 import type { SubscriptionTier } from "@/lib/ai/providers";
+import { sendTransactionalEmail } from "@/lib/email/resend";
+import { renderCheckoutConfirmationEmail } from "@/lib/email/checkout-confirmation";
 
 /** Add one calendar month to a date (UTC). */
 function addOneMonth(from: Date): Date {
@@ -38,7 +40,7 @@ export async function applyPaidUpgrade(
   const periodEnd = addOneMonth(now);
   const admin = createAdminClient();
 
-  const { error: profileError } = await admin
+  const { data: profile, error: profileError } = await admin
     .from("user_profiles")
     .update({
       subscription_tier: tier,
@@ -48,10 +50,29 @@ export async function applyPaidUpgrade(
       period_started_at: now.toISOString(),
       current_period_end: periodEnd.toISOString(),
     })
-    .eq("id", userId);
+    .eq("id", userId)
+    .select("email, display_name")
+    .maybeSingle();
 
   if (profileError) {
     throw new Error(`profile_update_failed: ${profileError.message}`);
+  }
+
+  // Best-effort confirmation email (Resend). Never fail the upgrade if email is
+  // unconfigured or the send errors — the customer is already upgraded.
+  if (profile?.email) {
+    const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
+    const { subject, html } = renderCheckoutConfirmationEmail({
+      tier,
+      amountPhp: amount,
+      periodEnd: periodEnd.toISOString(),
+      displayName: profile.display_name,
+      appUrl,
+    });
+    const result = await sendTransactionalEmail({ to: profile.email, subject, html });
+    if (!result.sent && !result.skipped) {
+      console.error("checkout_email_failed:", result.error);
+    }
   }
 
   const { error: ledgerError } = await admin.from("payments").upsert(
