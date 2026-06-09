@@ -13,7 +13,7 @@ interface UsageSummary {
 
 const DEMO_SUMMARY: UsageSummary = {
   totalUsers: 3,
-  usersByTier: { free: 1, starter: 1, business_pro: 0, agency_core: 1 },
+  usersByTier: { free: 1, starter: 1, business_pro: 0, agency_core: 1, agency_core_team: 0 },
   scansThisPeriod: 1257,
   tokensByProvider: { cerebras: 84210, openai: 1903400 },
 };

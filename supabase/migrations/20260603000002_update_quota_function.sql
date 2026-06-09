@@ -43,12 +43,13 @@ BEGIN
         -- In a full implementation, you might have a separate workspace_quotas table
 
         -- Check if user is a member of this workspace and what their role is
-        PERMITTED_ROLES: LOOP
-            EXIT WHEN NOT FOUND;
+        <<permitted_roles>>
+        LOOP
+            EXIT permitted_roles WHEN NOT FOUND;
             -- This is a simplified check - in reality you'd join workspace_members
             -- and check the user's role and the workspace's quota settings
-            EXIT;
-        END LOOP PERMITTED_ROLES;
+            EXIT permitted_roles;
+        END LOOP permitted_roles;
 
         -- For Agency Core, we might have workspace-level quotas
         -- For simplicity in this implementation, we'll use user quotas
@@ -101,4 +102,4 @@ RETURNS TABLE (
     assigned_model TEXT
 ) AS $$
     SELECT * FROM check_and_increment_quota(target_user_id, NULL, requested_batch_size);
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE sql SECURITY DEFINER;
