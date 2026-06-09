@@ -5,15 +5,20 @@
 //
 // Runs on the Edge Runtime (service-role Supabase client over fetch).
 import { createAdminClient } from "@/lib/supabase/admin";
-import { defaultQuotaForTier } from "@/lib/tiers";
+import {
+  defaultQuotaForTier,
+  clampSeats,
+  TIERS,
+  type BillingPeriod,
+} from "@/lib/tiers";
 import type { SubscriptionTier } from "@/lib/ai/providers";
 import { sendTransactionalEmail } from "@/lib/email/resend";
 import { renderCheckoutConfirmationEmail } from "@/lib/email/checkout-confirmation";
 
-/** Add one calendar month to a date (UTC). */
-function addOneMonth(from: Date): Date {
+/** Add `n` calendar months to a date (UTC). */
+function addMonths(from: Date, n: number): Date {
   const d = new Date(from);
-  d.setUTCMonth(d.getUTCMonth() + 1);
+  d.setUTCMonth(d.getUTCMonth() + n);
   return d;
 }
 
@@ -24,6 +29,10 @@ export interface ApplyUpgradeArgs {
   providerRef: string;
   /** Amount paid in PHP (whole pesos), when known. */
   amount?: number;
+  /** Seats purchased (team tier). Clamped to the tier's valid range. */
+  seats?: number;
+  /** Billing period — annual grants a 12-month window, monthly one month. */
+  period?: BillingPeriod;
 }
 
 /**
@@ -36,8 +45,10 @@ export async function applyPaidUpgrade(
   args: ApplyUpgradeArgs,
 ): Promise<{ periodEnd: string }> {
   const { userId, tier, providerRef, amount } = args;
+  const period: BillingPeriod = args.period ?? "monthly";
+  const seats = clampSeats(tier, args.seats ?? TIERS[tier].baseSeats);
   const now = new Date();
-  const periodEnd = addOneMonth(now);
+  const periodEnd = addMonths(now, period === "annual" ? 12 : 1);
   const admin = createAdminClient();
 
   const { data: profile, error: profileError } = await admin
@@ -45,6 +56,7 @@ export async function applyPaidUpgrade(
     .update({
       subscription_tier: tier,
       monthly_scan_quota: defaultQuotaForTier(tier),
+      seats,
       subscription_status: "active",
       scans_used_this_period: 0,
       period_started_at: now.toISOString(),
@@ -84,6 +96,8 @@ export async function applyPaidUpgrade(
       currency: "PHP",
       status: "paid",
       tier,
+      seats,
+      billing_period: period,
       period_start: now.toISOString(),
       period_end: periodEnd.toISOString(),
     },

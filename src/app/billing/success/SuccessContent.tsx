@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/shared/Button";
-import { TIERS, isSubscriptionTier } from "@/lib/tiers";
+import { TIERS, clampSeats, isBillingPeriod, isSubscriptionTier } from "@/lib/tiers";
 
 // Reads the PayMongo redirect params client-side so the page stays static
 // (no Edge function), keeping the Cloudflare Pages Worker bundle small.
@@ -12,6 +12,11 @@ export function SuccessContent() {
   const tier = params.get("tier") ?? undefined;
   const demo = params.get("demo") ?? undefined;
   const meta = isSubscriptionTier(tier) ? TIERS[tier] : null;
+  const rawSeats = params.get("seats");
+  const seats =
+    isSubscriptionTier(tier) && rawSeats ? clampSeats(tier, Number(rawSeats)) : null;
+  const periodParam = params.get("period");
+  const period = isBillingPeriod(periodParam) ? periodParam : null;
 
   return (
     <main className="min-h-screen flex items-center justify-center px-6 py-20">
@@ -29,6 +34,11 @@ export function SuccessContent() {
             ? `Your ${meta.label} subscription is being activated — ${meta.monthlyScanQuota.toLocaleString()} document scans/month.`
             : "Thanks! Your subscription is being activated."}
         </p>
+        {meta?.seatsExpandable && seats !== null && (
+          <p className="text-text-muted mb-2 text-sm">
+            {seats} team seats{period ? ` · ${period === "annual" ? "annual" : "monthly"} billing` : ""}.
+          </p>
+        )}
         {demo === "1" && (
           <p className="text-xs text-warning-amber mb-6">
             Demo mode: no real payment was charged.

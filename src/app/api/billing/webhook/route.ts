@@ -7,7 +7,7 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { applyPaidUpgrade } from "@/lib/billing/upgrade";
 import { isDemoMode } from "@/lib/mode";
-import { isSubscriptionTier } from "@/lib/tiers";
+import { clampSeats, isBillingPeriod, isSubscriptionTier, type BillingPeriod } from "@/lib/tiers";
 
 // Required by @cloudflare/next-on-pages: every non-static route runs on Edge.
 export const runtime = "edge";
@@ -72,17 +72,25 @@ export async function POST(req: NextRequest) {
   // checkout/QR creation).
   let userId = event.metadata.user_id;
   let tier: string | undefined = event.metadata.tier;
-  if (!userId || !isSubscriptionTier(tier)) {
+  // Seats/period prefer the PayMongo metadata, falling back to the pending row.
+  let seats: number | undefined =
+    event.metadata.seats !== undefined ? Number(event.metadata.seats) : undefined;
+  let period: BillingPeriod | undefined = isBillingPeriod(event.metadata.period)
+    ? event.metadata.period
+    : undefined;
+  if (!userId || !isSubscriptionTier(tier) || seats === undefined || period === undefined) {
     const admin = createAdminClient();
     const { data: pending } = await admin
       .from("payments")
-      .select("user_id, tier")
+      .select("user_id, tier, seats, billing_period")
       .eq("provider", "paymongo")
       .eq("provider_ref", providerRef)
       .maybeSingle();
     if (pending) {
       userId = userId ?? (pending.user_id as string | undefined);
       tier = isSubscriptionTier(tier) ? tier : (pending.tier as string | undefined);
+      if (seats === undefined && typeof pending.seats === "number") seats = pending.seats;
+      if (period === undefined && isBillingPeriod(pending.billing_period)) period = pending.billing_period;
     }
   }
 
@@ -93,10 +101,21 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const finalSeats =
+    seats !== undefined && Number.isFinite(seats) ? clampSeats(tier, seats) : undefined;
+  const finalPeriod: BillingPeriod = period ?? "monthly";
+
   // Upgrade the user + settle the ledger (idempotent on provider_ref).
   let periodEnd: string;
   try {
-    ({ periodEnd } = await applyPaidUpgrade({ userId, tier, providerRef, amount }));
+    ({ periodEnd } = await applyPaidUpgrade({
+      userId,
+      tier,
+      providerRef,
+      amount,
+      seats: finalSeats,
+      period: finalPeriod,
+    }));
   } catch (err) {
     console.error("webhook_upgrade_failed:", (err as Error).message);
     return NextResponse.json(

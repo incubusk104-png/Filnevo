@@ -1,5 +1,6 @@
 import { Button } from "@/components/shared/Button";
 import { UpgradeButton } from "@/components/landing/UpgradeButton";
+import { TeamPlanCard } from "@/components/landing/TeamPlanCard";
 
 export default function PricingSection() {
   return (
@@ -256,6 +257,9 @@ export default function PricingSection() {
             </div>
           </article>
         </div>
+
+        {/* Agency Core Team — multi-seat, expandable (Phase A) */}
+        <TeamPlanCard />
 
         {/* Comparison Footer */}
         <div className="mt-16 text-center">

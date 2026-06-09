@@ -11,7 +11,12 @@
 // placeholder QR so the whole flow builds and works end-to-end without any
 // keys. The webhook likewise treats a missing PAYMONGO_WEBHOOK_SECRET as demo
 // and skips signature verification.
-import { TIERS } from "@/lib/tiers";
+import {
+  TIERS,
+  clampSeats,
+  computeSubscriptionAmountPhp,
+  type BillingPeriod,
+} from "@/lib/tiers";
 import type { SubscriptionTier } from "@/lib/ai/providers";
 
 const PAYMONGO_API = "https://api.paymongo.com/v1";
@@ -56,6 +61,10 @@ export interface CreateQrphArgs {
   tier: SubscriptionTier;
   userId: string;
   email?: string;
+  /** Seats purchased (team tier). Clamped to the tier's valid range. */
+  seats?: number;
+  /** Billing period — drives the amount (annual = 2 months free). */
+  period?: BillingPeriod;
 }
 
 /** Default QR Ph validity window (PayMongo default is 30 minutes). */
@@ -85,14 +94,17 @@ export async function createQrphPayment(
 ): Promise<QrphPayment> {
   const { tier, userId } = args;
   const meta = TIERS[tier];
-  const amountCentavos = Math.round(meta.pricePhp * 100);
+  const seats = clampSeats(tier, args.seats ?? meta.baseSeats);
+  const period: BillingPeriod = args.period ?? "monthly";
+  const amountPhp = computeSubscriptionAmountPhp(tier, seats, period);
+  const amountCentavos = Math.round(amountPhp * 100);
   const expiresAt = new Date(Date.now() + QRPH_EXPIRY_SECONDS * 1000).toISOString();
 
   if (!isPaymongoConfigured()) {
     return {
       paymentIntentId: `demo_pi_${tier}_${Date.now()}`,
       qrImageUrl: DEMO_QR_DATA_URI,
-      amount: meta.pricePhp,
+      amount: amountPhp,
       status: "awaiting_next_action",
       expiresAt,
       demo: true,
@@ -117,7 +129,12 @@ export async function createQrphPayment(
           currency: "PHP",
           payment_method_allowed: ["qrph"],
           description: `Filnevo ${meta.label} subscription`,
-          metadata: { user_id: userId, tier },
+          metadata: {
+            user_id: userId,
+            tier,
+            seats: String(seats),
+            period,
+          },
         },
       },
     }),
@@ -179,7 +196,7 @@ export async function createQrphPayment(
   return {
     paymentIntentId,
     qrImageUrl: toQrDataUri(imageUrl),
-    amount: meta.pricePhp,
+    amount: amountPhp,
     status: attrs?.status ?? "awaiting_next_action",
     expiresAt,
     demo: false,
@@ -294,7 +311,7 @@ export interface PaymongoEvent {
   checkoutSessionId?: string;
   paymentIntentId?: string;
   amount?: number; // centavos
-  metadata: { user_id?: string; tier?: string };
+  metadata: { user_id?: string; tier?: string; seats?: string; period?: string };
 }
 
 /**
@@ -333,6 +350,8 @@ export function parseWebhookEvent(payload: unknown): PaymongoEvent {
     metadata: {
       user_id: attrs?.metadata?.user_id,
       tier: attrs?.metadata?.tier,
+      seats: attrs?.metadata?.seats,
+      period: attrs?.metadata?.period,
     },
   };
 }

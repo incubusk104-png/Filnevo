@@ -2,11 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SubscriptionTier } from "@/lib/ai/providers";
+import { TIERS, type BillingPeriod } from "@/lib/tiers";
 import { Turnstile } from "@/components/captcha/Turnstile";
 
 interface QrPaymentProps {
   tier: SubscriptionTier;
   label: string;
+  seats?: number;
+  period?: BillingPeriod;
 }
 
 interface QrData {
@@ -28,7 +31,9 @@ function formatCountdown(msLeft: number): string {
 // Renders a PayMongo QR Ph code, a download button, a GCash/Maya pay-by-QR
 // guide, and polls payment status until the customer has paid (then redirects
 // to the success page). The actual plan upgrade is applied server-side.
-export function QrPayment({ tier, label }: QrPaymentProps) {
+export function QrPayment({ tier, label, seats, period = "monthly" }: QrPaymentProps) {
+  const isTeam = TIERS[tier].seatsExpandable;
+  const periodSuffix = period === "annual" ? "/ year" : "/ month";
   const [data, setData] = useState<QrData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [paid, setPaid] = useState(false);
@@ -48,7 +53,7 @@ export function QrPayment({ tier, label }: QrPaymentProps) {
       const res = await fetch("/api/billing/qrph", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier, captcha_token: captchaToken }),
+        body: JSON.stringify({ tier, seats, period, captcha_token: captchaToken }),
       });
       if (res.status === 401) {
         window.location.href = `/login?next=${encodeURIComponent(`/billing/pay?tier=${tier}`)}`;
@@ -80,7 +85,7 @@ export function QrPayment({ tier, label }: QrPaymentProps) {
       setError("We couldn't generate a QR code. Please try again.");
     }
   },
-    [tier],
+    [tier, seats, period],
   );
 
   // A solved captcha token gates QR generation: as soon as the widget verifies
@@ -118,7 +123,10 @@ export function QrPayment({ tier, label }: QrPaymentProps) {
         const json = (await res.json()) as { paid?: boolean };
         if (json.paid) {
           setPaid(true);
-          window.location.href = `/billing/success?tier=${tier}`;
+          const successQs = new URLSearchParams({ tier });
+          if (seats !== undefined) successQs.set("seats", String(seats));
+          successQs.set("period", period);
+          window.location.href = `/billing/success?${successQs.toString()}`;
         }
       } catch {
         /* transient — keep polling */
@@ -129,7 +137,7 @@ export function QrPayment({ tier, label }: QrPaymentProps) {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [data, paid, expired, tier]);
+  }, [data, paid, expired, tier, seats, period]);
 
   // Flip to expired when the countdown runs out.
   const msLeft = data ? new Date(data.expiresAt).getTime() - now : 0;
@@ -144,10 +152,15 @@ export function QrPayment({ tier, label }: QrPaymentProps) {
         <h1 className="mt-3 font-heading text-2xl font-bold text-foreground">
           Pay for {label}
         </h1>
+        {isTeam && seats !== undefined && (
+          <p className="mt-1 text-sm text-text-muted">
+            {seats} seats · {period === "annual" ? "Annual" : "Monthly"} billing
+          </p>
+        )}
         {data && (
           <p className="mt-1 font-metrics text-lg text-insight-cyan">
             ₱{data.amount.toLocaleString()}{" "}
-            <span className="text-sm text-text-muted">/ month</span>
+            <span className="text-sm text-text-muted">{periodSuffix}</span>
           </p>
         )}
       </div>

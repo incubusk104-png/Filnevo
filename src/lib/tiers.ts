@@ -19,15 +19,43 @@ export interface TierMeta {
   baseSeats: number;
   /** Whether the tier supports buying extra seats beyond `baseSeats`. */
   seatsExpandable: boolean;
+  /**
+   * Monthly PHP price of each seat purchased beyond `baseSeats`. Only meaningful
+   * for an expandable tier; `0` everywhere else. `pricePhp` already covers the
+   * first `baseSeats` seats.
+   */
+  pricePerExtraSeatPhp: number;
 }
 
 export const TIERS: Record<SubscriptionTier, TierMeta> = {
-  free: { tier: "free", label: "Free Trial", pricePhp: 0, monthlyScanQuota: 5, baseSeats: 1, seatsExpandable: false },
-  starter: { tier: "starter", label: "Starter", pricePhp: 299, monthlyScanQuota: 50, baseSeats: 1, seatsExpandable: false },
-  business_pro: { tier: "business_pro", label: "Business Pro", pricePhp: 799, monthlyScanQuota: 500, baseSeats: 3, seatsExpandable: false },
-  agency_core: { tier: "agency_core", label: "Agency Core", pricePhp: 2499, monthlyScanQuota: 5000, baseSeats: 5, seatsExpandable: false },
-  agency_core_team: { tier: "agency_core_team", label: "Agency Core Team", pricePhp: 4999, monthlyScanQuota: 10000, baseSeats: 5, seatsExpandable: true },
+  free: { tier: "free", label: "Free Trial", pricePhp: 0, monthlyScanQuota: 5, baseSeats: 1, seatsExpandable: false, pricePerExtraSeatPhp: 0 },
+  starter: { tier: "starter", label: "Starter", pricePhp: 299, monthlyScanQuota: 50, baseSeats: 1, seatsExpandable: false, pricePerExtraSeatPhp: 0 },
+  business_pro: { tier: "business_pro", label: "Business Pro", pricePhp: 799, monthlyScanQuota: 500, baseSeats: 3, seatsExpandable: false, pricePerExtraSeatPhp: 0 },
+  agency_core: { tier: "agency_core", label: "Agency Core", pricePhp: 2499, monthlyScanQuota: 5000, baseSeats: 5, seatsExpandable: false, pricePerExtraSeatPhp: 0 },
+  agency_core_team: { tier: "agency_core_team", label: "Agency Core Team", pricePhp: 4999, monthlyScanQuota: 10000, baseSeats: 5, seatsExpandable: true, pricePerExtraSeatPhp: 799 },
 };
+
+/** Hard ceiling on purchasable seats (defensive bound for inputs/checkout). */
+export const MAX_SEATS = 100;
+
+export type BillingPeriod = "monthly" | "annual";
+
+/**
+ * Months charged for an annual subscription. Billing 10 months for a 12-month
+ * term is the "2 months free" annual discount surfaced on the pricing page.
+ */
+export const ANNUAL_MONTHS_CHARGED = 10;
+
+export function isBillingPeriod(value: unknown): value is BillingPeriod {
+  return value === "monthly" || value === "annual";
+}
+
+/** Clamp an arbitrary seat input to the valid [baseSeats, MAX_SEATS] range. */
+export function clampSeats(tier: SubscriptionTier, seats: number): number {
+  const min = TIERS[tier].baseSeats;
+  if (!Number.isFinite(seats)) return min;
+  return Math.min(MAX_SEATS, Math.max(min, Math.trunc(seats)));
+}
 
 export const TIER_KEYS = Object.keys(TIERS) as SubscriptionTier[];
 
@@ -53,6 +81,29 @@ export function seatLimitForTier(
   return seatsExpandable
     ? Math.max(baseSeats, Math.max(1, Math.trunc(purchasedSeats)))
     : baseSeats;
+}
+
+/**
+ * Total PHP charged for `tier` given the seats purchased and the billing period.
+ * Single source of truth shared by the pricing UI and the checkout API so the
+ * displayed price and the amount charged can never drift.
+ *
+ *   monthlyBase = pricePhp + max(0, seats - baseSeats) * pricePerExtraSeatPhp
+ *   monthly  -> monthlyBase
+ *   annual   -> monthlyBase * ANNUAL_MONTHS_CHARGED   (2 months free)
+ */
+export function computeSubscriptionAmountPhp(
+  tier: SubscriptionTier,
+  seats = 1,
+  period: BillingPeriod = "monthly",
+): number {
+  const meta = TIERS[tier];
+  const effectiveSeats = clampSeats(tier, seats);
+  const extraSeats = meta.seatsExpandable
+    ? Math.max(0, effectiveSeats - meta.baseSeats)
+    : 0;
+  const monthlyBase = meta.pricePhp + extraSeats * meta.pricePerExtraSeatPhp;
+  return period === "annual" ? monthlyBase * ANNUAL_MONTHS_CHARGED : monthlyBase;
 }
 
 export const SUBSCRIPTION_STATUSES = [

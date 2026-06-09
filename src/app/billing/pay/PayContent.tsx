@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { QrPayment } from "./QrPayment";
 import { Logo } from "@/components/shared/Logo";
-import { TIERS, isSubscriptionTier } from "@/lib/tiers";
+import { TIERS, clampSeats, isBillingPeriod, isSubscriptionTier, type BillingPeriod } from "@/lib/tiers";
 import {
   createClient,
   isSupabaseConfiguredClient,
@@ -25,6 +25,14 @@ export function PayContent() {
   const tier =
     isSubscriptionTier(rawTier) && rawTier !== "free" ? rawTier : null;
   const valid = tier !== null;
+
+  // Seats/period ride along for the team tier. Seats are clamped to the tier's
+  // valid range; period defaults to monthly. The qrph route re-validates both
+  // server-side, so this is just for a correct preview + request payload.
+  const rawSeats = params.get("seats");
+  const seats = tier ? clampSeats(tier, Number(rawSeats ?? TIERS[tier].baseSeats)) : 1;
+  const periodParam = params.get("period");
+  const period: BillingPeriod = isBillingPeriod(periodParam) ? periodParam : "monthly";
 
   // Auth gate: payment (and the QR) must never be shown to a visitor who isn't
   // signed in. We resolve the Supabase session in the browser and, if there's
@@ -53,7 +61,10 @@ export function PayContent() {
         return;
       }
       setAuthStatus("guest");
-      const next = `/billing/pay?tier=${tier ?? ""}`;
+      const nextQs = new URLSearchParams({ tier: tier ?? "" });
+      if (rawSeats) nextQs.set("seats", String(seats));
+      nextQs.set("period", period);
+      const next = `/billing/pay?${nextQs.toString()}`;
       window.location.replace(
         `/login?mode=signin&next=${encodeURIComponent(next)}`,
       );
@@ -89,7 +100,7 @@ export function PayContent() {
             </Link>
           </div>
         ) : authStatus === "authed" && tier ? (
-          <QrPayment tier={tier} label={TIERS[tier].label} />
+          <QrPayment tier={tier} label={TIERS[tier].label} seats={seats} period={period} />
         ) : (
           // "checking" or "guest" (mid-redirect) — never reveal the QR here.
           <div className="data-card flex flex-col items-center gap-3 border border-hairline p-8 text-center">

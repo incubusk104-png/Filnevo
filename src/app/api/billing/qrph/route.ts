@@ -2,7 +2,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { resolveBillingUser } from "@/lib/billing/auth";
 import { createQrphPayment } from "@/lib/billing/paymongo";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { TIERS, isSubscriptionTier } from "@/lib/tiers";
+import {
+  clampSeats,
+  computeSubscriptionAmountPhp,
+  isBillingPeriod,
+  isSubscriptionTier,
+  type BillingPeriod,
+} from "@/lib/tiers";
 import { verifyTurnstile } from "@/lib/captcha/turnstile";
 
 // Required by @cloudflare/next-on-pages: every non-static route runs on Edge.
@@ -10,6 +16,8 @@ export const runtime = "edge";
 
 interface QrphBody {
   tier?: string;
+  seats?: number;
+  period?: string;
   captcha_token?: string;
 }
 
@@ -47,9 +55,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "free_tier_not_billable" }, { status: 400 });
   }
 
+  // Seats/period are clamped to the tier's valid range here (server-side source
+  // of truth) so a tampered request can never under-charge or over-provision.
+  const seats = clampSeats(tier, body.seats ?? 0);
+  const period: BillingPeriod = isBillingPeriod(body.period) ? body.period : "monthly";
+  const amountPhp = computeSubscriptionAmountPhp(tier, seats, period);
+
   let qr;
   try {
-    qr = await createQrphPayment({ tier, userId: auth.userId, email: auth.email });
+    qr = await createQrphPayment({ tier, userId: auth.userId, email: auth.email, seats, period });
   } catch (err) {
     console.error("qrph_create_failed:", (err as Error).message);
     return NextResponse.json({ ok: false, error: "qrph_create_failed" }, { status: 502 });
@@ -65,10 +79,12 @@ export async function POST(req: NextRequest) {
           user_id: auth.userId,
           provider: "paymongo",
           provider_ref: qr.paymentIntentId,
-          amount: TIERS[tier].pricePhp,
+          amount: amountPhp,
           currency: "PHP",
           status: "pending",
           tier,
+          seats,
+          billing_period: period,
         },
         { onConflict: "provider,provider_ref" },
       );
@@ -84,6 +100,8 @@ export async function POST(req: NextRequest) {
     qr_image_url: qr.qrImageUrl,
     amount: qr.amount,
     tier,
+    seats,
+    period,
     expires_at: qr.expiresAt,
   });
 }
