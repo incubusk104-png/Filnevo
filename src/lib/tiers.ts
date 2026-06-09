@@ -32,6 +32,8 @@ export const TIERS: Record<SubscriptionTier, TierMeta> = {
   starter: { tier: "starter", label: "Starter", pricePhp: 299, monthlyScanQuota: 50, baseSeats: 1, seatsExpandable: false, pricePerExtraSeatPhp: 0 },
   business_pro: { tier: "business_pro", label: "Business Pro", pricePhp: 799, monthlyScanQuota: 500, baseSeats: 3, seatsExpandable: false, pricePerExtraSeatPhp: 0 },
   agency_core: { tier: "agency_core", label: "Agency Core", pricePhp: 2499, monthlyScanQuota: 5000, baseSeats: 5, seatsExpandable: false, pricePerExtraSeatPhp: 0 },
+  team_starter: { tier: "team_starter", label: "Team Starter", pricePhp: 799, monthlyScanQuota: 150, baseSeats: 3, seatsExpandable: false, pricePerExtraSeatPhp: 0 },
+  team_pro: { tier: "team_pro", label: "Team Pro", pricePhp: 1999, monthlyScanQuota: 1500, baseSeats: 5, seatsExpandable: false, pricePerExtraSeatPhp: 0 },
   agency_core_team: { tier: "agency_core_team", label: "Agency Core Team", pricePhp: 4999, monthlyScanQuota: 10000, baseSeats: 5, seatsExpandable: true, pricePerExtraSeatPhp: 799 },
 };
 
