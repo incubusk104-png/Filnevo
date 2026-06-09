@@ -13,7 +13,8 @@ export type SubscriptionTier =
   | "free"
   | "starter"
   | "business_pro"
-  | "agency_core";
+  | "agency_core"
+  | "agency_core_team";
 
 export type AiProvider = "cerebras" | "openai";
 
