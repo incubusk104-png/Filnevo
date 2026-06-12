@@ -8,32 +8,68 @@ import { createClient } from "@/lib/supabase/server";
 import { checkPassword } from "@/lib/auth/password";
 import { verifyTurnstile } from "@/lib/captcha/turnstile";
 import { safeNextPath } from "@/lib/auth/next";
+import { isDemoMode } from "@/lib/mode";
 
-export type AuthState =
-  | { error?: string; notice?: string; redirectTo?: string }
-  | null;
+export type AuthState = {
+    error?: string;
+    notice?: string;
+    redirectTo?: string;
+} | null;
+
+const EMAIL_VERIFICATION_REQUIRED_MESSAGE =
+    "Email verification is required, but Supabase did not send a code. Enable Confirm email in Supabase Auth settings before accepting new registrations.";
 
 const credentialsSchema = z.object({
-  email: z.string().trim().email("Enter a valid email address."),
-  password: z.string().min(1, "Password is required."),
+    email: z.string().trim().email("Enter a valid email address."),
+    password: z.string().min(1, "Password is required."),
 });
 
 const verifySchema = z.object({
-  email: z.string().trim().email("Enter a valid email address."),
-  token: z
-    .string()
-    .trim()
-    .regex(/^\d{6}$/, "Enter the 6-digit code from your email."),
+    email: z.string().trim().email("Enter a valid email address."),
+    token: z
+        .string()
+        .trim()
+        .regex(/^\d{6}$/, "Enter the 6-digit code from your email."),
 });
 
 const resetSchema = z.object({
-  email: z.string().trim().email("Enter a valid email address."),
-  token: z
-    .string()
-    .trim()
-    .regex(/^\d{6}$/, "Enter the 6-digit code from your email."),
-  password: z.string().min(1, "Password is required."),
+    email: z.string().trim().email("Enter a valid email address."),
+    token: z
+        .string()
+        .trim()
+        .regex(/^\d{6}$/, "Enter the 6-digit code from your email."),
+    password: z.string().min(1, "Password is required."),
 });
+
+async function markEmailVerified(
+    supabase: Awaited<ReturnType<typeof createClient>>,
+    userId: string,
+) {
+    const { error } = await supabase
+        .from("user_profiles")
+        .update({ email_verified_at: new Date().toISOString() })
+        .eq("id", userId);
+
+    if (error) console.error("email_verified_marker_failed:", error.message);
+}
+
+async function hasEmailVerificationMarker(
+    supabase: Awaited<ReturnType<typeof createClient>>,
+    userId: string,
+): Promise<boolean> {
+    const { data, error } = await supabase
+        .from("user_profiles")
+        .select("email_verified_at")
+        .eq("id", userId)
+        .maybeSingle();
+
+    if (error) {
+        console.error("email_verified_marker_read_failed:", error.message);
+        return false;
+    }
+
+    return Boolean(data?.email_verified_at);
+}
 
 /**
  * The Cloudflare Turnstile token a form injected (`cf-turnstile-response`), if
@@ -43,163 +79,185 @@ const resetSchema = z.object({
  * either way.
  */
 function captchaToken(formData: FormData): string | undefined {
-  return (formData.get("cf-turnstile-response") as string | null) || undefined;
+    return (
+        (formData.get("cf-turnstile-response") as string | null) || undefined
+    );
 }
 
 /** Resolve the public origin for OAuth redirects. */
 async function getOrigin(): Promise<string> {
-  if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? "https";
-  return `${proto}://${host}`;
+    if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
+    const h = await headers();
+    const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+    const proto = h.get("x-forwarded-proto") ?? "https";
+    return `${proto}://${host}`;
 }
 
 export async function signIn(
-  _prev: AuthState,
-  formData: FormData,
+    _prev: AuthState,
+    formData: FormData,
 ): Promise<AuthState> {
-  const parsed = credentialsSchema.safeParse({
-    email: formData.get("email"),
-    password: formData.get("password"),
-  });
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
-  }
+    const parsed = credentialsSchema.safeParse({
+        email: formData.get("email"),
+        password: formData.get("password"),
+    });
+    if (!parsed.success) {
+        return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    ...parsed.data,
-    options: { captchaToken: captchaToken(formData) },
-  });
-  if (error) return { error: error.message };
+    const next = safeNextPath(formData.get("next") as string | null);
+    if (isDemoMode()) {
+        revalidatePath("/", "layout");
+        redirect(next);
+    }
 
-  const next = safeNextPath(formData.get("next") as string | null);
-  revalidatePath("/", "layout");
-  redirect(next);
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+        ...parsed.data,
+        options: { captchaToken: captchaToken(formData) },
+    });
+    if (error) return { error: error.message };
+
+    if (
+        !data.user?.email_confirmed_at ||
+        !(await hasEmailVerificationMarker(supabase, data.user.id))
+    ) {
+        await supabase.auth.signOut();
+        return { error: "Please verify your email before signing in." };
+    }
+
+    revalidatePath("/", "layout");
+    redirect(next);
 }
 
 export async function signUp(
-  _prev: AuthState,
-  formData: FormData,
+    _prev: AuthState,
+    formData: FormData,
 ): Promise<AuthState> {
-  const parsed = credentialsSchema.safeParse({
-    email: formData.get("email"),
-    password: formData.get("password"),
-  });
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
-  }
-
-  // Enforce the shared password policy server-side (never trust the client).
-  const strength = checkPassword(parsed.data.password);
-  if (!strength.ok) {
-    return {
-      error: `Password too weak — ${strength.firstUnmet ?? "does not meet requirements"}.`,
-    };
-  }
-
-  const supabase = await createClient();
-  const origin = await getOrigin();
-  const { data, error } = await supabase.auth.signUp({
-    email: parsed.data.email,
-    password: parsed.data.password,
-    options: {
-      emailRedirectTo: `${origin}/auth/callback`,
-      captchaToken: captchaToken(formData),
-    },
-  });
-  // Some Supabase setups surface duplicates as an explicit error.
-  if (error) {
-    if (/already|registered|exists/i.test(error.message)) {
-      return {
-        error: "This email is already registered. Please sign in instead.",
-      };
+    const parsed = credentialsSchema.safeParse({
+        email: formData.get("email"),
+        password: formData.get("password"),
+    });
+    if (!parsed.success) {
+        return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
     }
-    return { error: error.message };
-  }
 
-  // To prevent email enumeration, Supabase returns a 200 with a "fake" user
-  // (empty `identities`) when the address already belongs to a confirmed
-  // account. Detect that and steer the user to sign in instead of leaving them
-  // waiting for a verification code that never comes.
-  const identities = data.user?.identities;
-  if (data.user && Array.isArray(identities) && identities.length === 0) {
-    return {
-      error: "This email is already registered. Please sign in instead.",
-    };
-  }
+    // Enforce the shared password policy server-side (never trust the client).
+    const strength = checkPassword(parsed.data.password);
+    if (!strength.ok) {
+        return {
+            error: `Password too weak — ${strength.firstUnmet ?? "does not meet requirements"}.`,
+        };
+    }
 
-  const next = safeNextPath(formData.get("next") as string | null);
+    const supabase = await createClient();
+    const origin = await getOrigin();
+    const { data, error } = await supabase.auth.signUp({
+        email: parsed.data.email,
+        password: parsed.data.password,
+        options: {
+            emailRedirectTo: `${origin}/auth/callback`,
+            captchaToken: captchaToken(formData),
+        },
+    });
+    // Some Supabase setups surface duplicates as an explicit error.
+    if (error) {
+        if (/already|registered|exists/i.test(error.message)) {
+            return {
+                error: "This email is already registered. Please sign in instead.",
+            };
+        }
+        return { error: error.message };
+    }
 
-  // Email confirmation disabled — a session is returned immediately.
-  if (data.session) {
-    revalidatePath("/", "layout");
-    redirect(next);
-  }
+    // To prevent email enumeration, Supabase returns a 200 with a "fake" user
+    // (empty `identities`) when the address already belongs to a confirmed
+    // account. Detect that and steer the user to sign in instead of leaving them
+    // waiting for a verification code that never comes.
+    const identities = data.user?.identities;
+    if (data.user && Array.isArray(identities) && identities.length === 0) {
+        return {
+            error: "This email is already registered. Please sign in instead.",
+        };
+    }
 
-  // Otherwise Supabase emailed a verification code. Move to the verify step
-  // where the user enters that code to activate the account, carrying the
-  // post-auth destination through so they land where they intended.
-  const verifyUrl =
-    `/login?step=verify&email=${encodeURIComponent(parsed.data.email)}` +
-    (next !== "/" ? `&next=${encodeURIComponent(next)}` : "");
-  redirect(verifyUrl);
+    const next = safeNextPath(formData.get("next") as string | null);
+
+    // Fail closed: production signups must require the emailed verification code.
+    // If Supabase returns a session immediately, the project's Auth → Providers →
+    // Email "Confirm email" setting is off. Do not silently create an active
+    // account, because that is exactly the unverified-registration failure mode.
+    if (data.session) {
+        await supabase.auth.signOut();
+        return { error: EMAIL_VERIFICATION_REQUIRED_MESSAGE };
+    }
+
+    // Supabase emailed a verification code. Move to the verify step where the user
+    // enters that code to activate the account, carrying the post-auth destination
+    // through so they land where they intended.
+    const verifyUrl =
+        `/login?step=verify&email=${encodeURIComponent(parsed.data.email)}` +
+        (next !== "/" ? `&next=${encodeURIComponent(next)}` : "");
+    redirect(verifyUrl);
 }
 
 export async function verifyEmail(
-  _prev: AuthState,
-  formData: FormData,
+    _prev: AuthState,
+    formData: FormData,
 ): Promise<AuthState> {
-  const parsed = verifySchema.safeParse({
-    email: formData.get("email"),
-    token: formData.get("token"),
-  });
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
-  }
+    const parsed = verifySchema.safeParse({
+        email: formData.get("email"),
+        token: formData.get("token"),
+    });
+    if (!parsed.success) {
+        return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    }
 
-  // Human-verification gate (Cloudflare Turnstile). No-ops in demo mode.
-  const h = await headers();
-  const captchaOk = await verifyTurnstile(
-    formData.get("cf-turnstile-response") as string | null,
-    h.get("cf-connecting-ip"),
-  );
-  if (!captchaOk) {
-    return { error: "Captcha verification failed. Please try again." };
-  }
+    // Human-verification gate (Cloudflare Turnstile). No-ops in demo mode.
+    const h = await headers();
+    const captchaOk = await verifyTurnstile(
+        formData.get("cf-turnstile-response") as string | null,
+        h.get("cf-connecting-ip"),
+    );
+    if (!captchaOk) {
+        return { error: "Captcha verification failed. Please try again." };
+    }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({
-    email: parsed.data.email,
-    token: parsed.data.token,
-    type: "signup",
-  });
-  if (error) return { error: error.message };
+    const supabase = await createClient();
+    const {
+        data: { user },
+        error,
+    } = await supabase.auth.verifyOtp({
+        email: parsed.data.email,
+        token: parsed.data.token,
+        type: "signup",
+    });
+    if (error) return { error: error.message };
+    if (user?.id) await markEmailVerified(supabase, user.id);
 
-  const next = safeNextPath(formData.get("next") as string | null);
-  revalidatePath("/", "layout");
-  redirect(next);
+    const next = safeNextPath(formData.get("next") as string | null);
+    revalidatePath("/", "layout");
+    redirect(next);
 }
 
 export async function resendCode(
-  _prev: AuthState,
-  formData: FormData,
+    _prev: AuthState,
+    formData: FormData,
 ): Promise<AuthState> {
-  const email = String(formData.get("email") ?? "").trim();
-  if (!z.string().email().safeParse(email).success) {
-    return { error: "Enter a valid email address." };
-  }
+    const email = String(formData.get("email") ?? "").trim();
+    if (!z.string().email().safeParse(email).success) {
+        return { error: "Enter a valid email address." };
+    }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.resend({
-    type: "signup",
-    email,
-    options: { captchaToken: captchaToken(formData) },
-  });
-  if (error) return { error: error.message };
+    const supabase = await createClient();
+    const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { captchaToken: captchaToken(formData) },
+    });
+    if (error) return { error: error.message };
 
-  return { notice: "A new code is on its way — check your inbox." };
+    return { notice: "A new code is on its way — check your inbox." };
 }
 
 /**
@@ -211,28 +269,28 @@ export async function resendCode(
  * addresses, so no code arrives and the flow simply can't be completed.
  */
 export async function requestPasswordReset(
-  _prev: AuthState,
-  formData: FormData,
+    _prev: AuthState,
+    formData: FormData,
 ): Promise<AuthState> {
-  const email = String(formData.get("email") ?? "").trim();
-  if (!z.string().email().safeParse(email).success) {
-    return { error: "Enter a valid email address." };
-  }
+    const email = String(formData.get("email") ?? "").trim();
+    if (!z.string().email().safeParse(email).success) {
+        return { error: "Enter a valid email address." };
+    }
 
-  const supabase = await createClient();
-  const origin = await getOrigin();
-  // Ignore the result: never reveal whether the email is registered. The
-  // `redirectTo` powers the optional magic-link fallback in the reset email.
-  await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback`,
-    captchaToken: captchaToken(formData),
-  });
+    const supabase = await createClient();
+    const origin = await getOrigin();
+    // Ignore the result: never reveal whether the email is registered. The
+    // `redirectTo` powers the optional magic-link fallback in the reset email.
+    await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${origin}/auth/callback`,
+        captchaToken: captchaToken(formData),
+    });
 
-  const next = safeNextPath(formData.get("next") as string | null);
-  const resetUrl =
-    `/login?step=reset&email=${encodeURIComponent(email)}` +
-    (next !== "/" ? `&next=${encodeURIComponent(next)}` : "");
-  redirect(resetUrl);
+    const next = safeNextPath(formData.get("next") as string | null);
+    const resetUrl =
+        `/login?step=reset&email=${encodeURIComponent(email)}` +
+        (next !== "/" ? `&next=${encodeURIComponent(next)}` : "");
+    redirect(resetUrl);
 }
 
 /**
@@ -242,100 +300,100 @@ export async function requestPasswordReset(
  * which `updateUser` can change the password for that now-authenticated user.
  */
 export async function resetPassword(
-  _prev: AuthState,
-  formData: FormData,
+    _prev: AuthState,
+    formData: FormData,
 ): Promise<AuthState> {
-  const parsed = resetSchema.safeParse({
-    email: formData.get("email"),
-    token: formData.get("token"),
-    password: formData.get("password"),
-  });
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
-  }
+    const parsed = resetSchema.safeParse({
+        email: formData.get("email"),
+        token: formData.get("token"),
+        password: formData.get("password"),
+    });
+    if (!parsed.success) {
+        return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    }
 
-  // Enforce the shared password policy server-side (never trust the client).
-  const strength = checkPassword(parsed.data.password);
-  if (!strength.ok) {
-    return {
-      error: `Password too weak — ${strength.firstUnmet ?? "does not meet requirements"}.`,
-    };
-  }
+    // Enforce the shared password policy server-side (never trust the client).
+    const strength = checkPassword(parsed.data.password);
+    if (!strength.ok) {
+        return {
+            error: `Password too weak — ${strength.firstUnmet ?? "does not meet requirements"}.`,
+        };
+    }
 
-  // Human-verification gate (Cloudflare Turnstile). No-ops in demo mode.
-  const h = await headers();
-  const captchaOk = await verifyTurnstile(
-    formData.get("cf-turnstile-response") as string | null,
-    h.get("cf-connecting-ip"),
-  );
-  if (!captchaOk) {
-    return { error: "Captcha verification failed. Please try again." };
-  }
+    // Human-verification gate (Cloudflare Turnstile). No-ops in demo mode.
+    const h = await headers();
+    const captchaOk = await verifyTurnstile(
+        formData.get("cf-turnstile-response") as string | null,
+        h.get("cf-connecting-ip"),
+    );
+    if (!captchaOk) {
+        return { error: "Captcha verification failed. Please try again." };
+    }
 
-  const supabase = await createClient();
-  const { error: otpError } = await supabase.auth.verifyOtp({
-    email: parsed.data.email,
-    token: parsed.data.token,
-    type: "recovery",
-  });
-  if (otpError) return { error: otpError.message };
+    const supabase = await createClient();
+    const { error: otpError } = await supabase.auth.verifyOtp({
+        email: parsed.data.email,
+        token: parsed.data.token,
+        type: "recovery",
+    });
+    if (otpError) return { error: otpError.message };
 
-  const { error: updateError } = await supabase.auth.updateUser({
-    password: parsed.data.password,
-  });
-  if (updateError) return { error: updateError.message };
+    const { error: updateError } = await supabase.auth.updateUser({
+        password: parsed.data.password,
+    });
+    if (updateError) return { error: updateError.message };
 
-  const next = safeNextPath(formData.get("next") as string | null);
-  revalidatePath("/", "layout");
-  redirect(next);
+    const next = safeNextPath(formData.get("next") as string | null);
+    revalidatePath("/", "layout");
+    redirect(next);
 }
 
 /** Re-send the password-reset code (used from the reset step). */
 export async function resendResetCode(
-  _prev: AuthState,
-  formData: FormData,
+    _prev: AuthState,
+    formData: FormData,
 ): Promise<AuthState> {
-  const email = String(formData.get("email") ?? "").trim();
-  if (!z.string().email().safeParse(email).success) {
-    return { error: "Enter a valid email address." };
-  }
+    const email = String(formData.get("email") ?? "").trim();
+    if (!z.string().email().safeParse(email).success) {
+        return { error: "Enter a valid email address." };
+    }
 
-  const supabase = await createClient();
-  const origin = await getOrigin();
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback`,
-    captchaToken: captchaToken(formData),
-  });
-  if (error) return { error: error.message };
+    const supabase = await createClient();
+    const origin = await getOrigin();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${origin}/auth/callback`,
+        captchaToken: captchaToken(formData),
+    });
+    if (error) return { error: error.message };
 
-  return { notice: "A new code is on its way — check your inbox." };
+    return { notice: "A new code is on its way — check your inbox." };
 }
 
 export async function signInWithGoogle(
-  _prev: AuthState,
-  formData: FormData,
+    _prev: AuthState,
+    formData: FormData,
 ): Promise<AuthState> {
-  const supabase = await createClient();
-  const origin = await getOrigin();
-  const next = safeNextPath(formData.get("next") as string | null);
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
-      // Don't let supabase-js redirect server-side; we hand the URL back to the
-      // client to navigate. Redirecting to an external URL via Next's
-      // `redirect()` inside a Server Action 500s on the Cloudflare Edge runtime.
-      skipBrowserRedirect: true,
-    },
-  });
-  if (error) return { error: error.message };
-  if (!data?.url) return { error: "Could not start Google sign-in." };
-  return { redirectTo: data.url };
+    const supabase = await createClient();
+    const origin = await getOrigin();
+    const next = safeNextPath(formData.get("next") as string | null);
+    const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+            redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+            // Don't let supabase-js redirect server-side; we hand the URL back to the
+            // client to navigate. Redirecting to an external URL via Next's
+            // `redirect()` inside a Server Action 500s on the Cloudflare Edge runtime.
+            skipBrowserRedirect: true,
+        },
+    });
+    if (error) return { error: error.message };
+    if (!data?.url) return { error: "Could not start Google sign-in." };
+    return { redirectTo: data.url };
 }
 
 export async function signOut() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  revalidatePath("/", "layout");
-  redirect("/login");
+    const supabase = await createClient();
+    await supabase.auth.signOut();
+    revalidatePath("/", "layout");
+    redirect("/login");
 }

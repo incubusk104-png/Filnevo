@@ -25,10 +25,32 @@ render:
    your live domain (e.g. `https://filnevo.com`) so `{{ .SiteURL }}` resolves.
 3. If the image is missing, clients fall back to the `alt="Filnevo"` text.
 
+## Required Supabase Auth settings
+
+Set these before testing registration, otherwise Supabase may send default emails
+or skip verification entirely:
+
+1. **Authentication → URL Configuration**
+   - **Site URL**: your production website, e.g. `https://filnevo.com`
+   - **Redirect URLs**:
+     - `https://filnevo.com/auth/callback`
+     - `http://localhost:3000/auth/callback` for local testing
+2. **Authentication → Providers → Email**
+   - Enable **Confirm email**.
+   - Filnevo fails closed if Supabase returns an immediate signup session,
+     because that means no verification code was required.
+3. **Authentication → Emails → SMTP Settings**
+   - Configure custom SMTP for production so mail comes from your Filnevo domain
+     instead of `Supabase Auth <noreply@mail.app.supabase.io>`.
+
+Google OAuth does not use Filnevo's 6-digit email code; Google verifies the email
+at the provider step, then Supabase redirects back through `/auth/callback`.
+
 ## Templates → Supabase mapping
 
 Apply each file in **Dashboard → Authentication → Emails**, pasting the file's
-contents into that email's **Message body** source editor.
+contents into that email's **Message body** source editor. These files are the
+source of truth for all Supabase authentication and security-related emails.
 
 | Supabase email (in dashboard) | File | Suggested subject |
 | --- | --- | --- |
@@ -54,8 +76,13 @@ contents into that email's **Message body** source editor.
 
 The "Supabase Auth · noreply@mail.app.supabase.io" sender comes from Supabase's
 shared SMTP. To send as Filnevo, configure **custom SMTP** in
-**Authentication → Emails → SMTP Settings** (set sender name `Filnevo` and your
-own from-address/domain). Custom SMTP is required for production-grade delivery.
+**Authentication → Emails → SMTP Settings**:
+
+- Sender name: `Filnevo`
+- Sender email: a verified address on your domain, e.g. `noreply@filnevo.com`
+- Reply-to: your support inbox, e.g. `support@filnevo.com`
+
+Custom SMTP is required for production-grade branded delivery.
 
 ## Remove demo notices
 

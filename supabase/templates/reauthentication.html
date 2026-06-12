@@ -1,66 +1,21 @@
 <!--
-  Filnevo — "Reauthentication" email template.
+  Filnevo — Supabase Auth template: Reauthentication
 
-  Paste this into Supabase: Dashboard → Authentication → Emails →
-  "Reauthentication" → Message body (source). This email only supports
-  the 6-digit {{ .Token }} code (Supabase does not provide a
-  {{ .ConfirmationURL }} for reauthentication), so there is no link.
+  Dashboard path:
+  Authentication → Emails → Reauthentication → Message body (source)
 
-  Supabase template variables used:
-    {{ .Token }}  6-digit one-time verification code
-
-  Email clients ignore <style>/web fonts inconsistently, so everything is
-  inline with web-safe font stacks and table layout. Colours mirror the
-  "Precision Metrics" system (bg #0a0e17, velocity-blue #3b82f6).
+  Supabase does not provide {{ .ConfirmationURL }} for this template. Use
+  {{ .Token }} only.
 -->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0;padding:0;background-color:#0a0e17;">
   <tr>
     <td align="center" style="padding:32px 16px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#0f1420;border:1px solid #1e293b;border-radius:16px;overflow:hidden;">
-        <!-- Brand header -->
-        <tr>
-          <td style="padding:28px 32px 8px 32px;">
-            <img src="{{ .SiteURL }}/email-logo.png" width="140" alt="Filnevo" style="display:block;border:0;outline:none;text-decoration:none;max-width:140px;height:auto;" />
-          </td>
-        </tr>
-
-        <!-- Heading -->
-        <tr>
-          <td style="padding:8px 32px 0 32px;">
-            <h1 style="margin:0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:#e6e9f0;">
-              Confirm it&rsquo;s you
-            </h1>
-            <p style="margin:10px 0 0 0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#94a3b8;">
-              Enter this 6-digit code to verify your identity before completing a sensitive action on your Filnevo account.
-            </p>
-          </td>
-        </tr>
-
-        <!-- Verification code -->
-        <tr>
-          <td style="padding:24px 32px 8px 32px;">
-            <div style="background-color:#0a0e17;border:1px solid #1e293b;border-radius:12px;padding:20px;text-align:center;">
-              <div style="font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#64748b;">
-                Verification code
-              </div>
-              <div style="margin-top:10px;font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;font-size:34px;font-weight:700;letter-spacing:0.4em;color:#3b82f6;">
-                {{ .Token }}
-              </div>
-            </div>
-          </td>
-        </tr>
-
-        <!-- Footer -->
-        <tr>
-          <td style="padding:24px 32px 28px 32px;border-top:1px solid #1e293b;">
-            <p style="margin:0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#64748b;">
-              This code expires shortly. If you didn&rsquo;t initiate this action, you can safely ignore this email and consider changing your password.
-            </p>
-            <p style="margin:12px 0 0 0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:12px;color:#475569;">
-              &copy; Filnevo
-            </p>
-          </td>
-        </tr>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#0f1420;border:1px solid #1e293b;border-radius:18px;overflow:hidden;">
+        <tr><td style="padding:28px 32px 8px 32px;"><a href="{{ .SiteURL }}" style="text-decoration:none;"><img src="{{ .SiteURL }}/email-logo.png" width="140" alt="Filnevo" style="display:block;border:0;outline:none;text-decoration:none;max-width:140px;height:auto;" /></a><p style="margin:16px 0 0 0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.28em;text-transform:uppercase;color:#64748b;">Sensitive action check</p></td></tr>
+        <tr><td style="padding:12px 32px 0 32px;"><h1 style="margin:0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:24px;line-height:1.25;font-weight:700;color:#e6e9f0;">Confirm it&rsquo;s you</h1><p style="margin:12px 0 0 0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.65;color:#94a3b8;">Enter this code before completing a sensitive action on your Filnevo account.</p></td></tr>
+        <tr><td style="padding:24px 32px 8px 32px;"><div style="background-color:#0a0e17;border:1px solid #1e293b;border-radius:14px;padding:22px;text-align:center;"><div style="font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#64748b;">Reauthentication code</div><div style="margin-top:10px;font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;font-size:34px;font-weight:800;letter-spacing:0.36em;color:#3b82f6;">{{ .Token }}</div></div></td></tr>
+        <tr><td style="padding:16px 32px 8px 32px;"><p style="margin:0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#64748b;">Return to Filnevo at <a href="{{ .SiteURL }}" style="color:#67e8f9;text-decoration:none;">{{ .SiteURL }}</a> and enter this code when prompted.</p></td></tr>
+        <tr><td style="padding:24px 32px 28px 32px;border-top:1px solid #1e293b;"><p style="margin:0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.65;color:#64748b;">If you did not initiate this action, ignore this email and consider changing your password.</p><p style="margin:12px 0 0 0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:11px;color:#475569;">&copy; Filnevo</p></td></tr>
       </table>
     </td>
   </tr>

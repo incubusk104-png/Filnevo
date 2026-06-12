@@ -12,8 +12,6 @@ import {
   type BillingPeriod,
 } from "@/lib/tiers";
 import type { SubscriptionTier } from "@/lib/ai/providers";
-import { sendTransactionalEmail } from "@/lib/email/resend";
-import { renderCheckoutConfirmationEmail } from "@/lib/email/checkout-confirmation";
 
 /** Add `n` calendar months to a date (UTC). */
 function addMonths(from: Date, n: number): Date {
@@ -51,7 +49,7 @@ export async function applyPaidUpgrade(
   const periodEnd = addMonths(now, period === "annual" ? 12 : 1);
   const admin = createAdminClient();
 
-  const { data: profile, error: profileError } = await admin
+  const { error: profileError } = await admin
     .from("user_profiles")
     .update({
       subscription_tier: tier,
@@ -62,29 +60,10 @@ export async function applyPaidUpgrade(
       period_started_at: now.toISOString(),
       current_period_end: periodEnd.toISOString(),
     })
-    .eq("id", userId)
-    .select("email, display_name")
-    .maybeSingle();
+    .eq("id", userId);
 
   if (profileError) {
     throw new Error(`profile_update_failed: ${profileError.message}`);
-  }
-
-  // Best-effort confirmation email (Resend). Never fail the upgrade if email is
-  // unconfigured or the send errors — the customer is already upgraded.
-  if (profile?.email) {
-    const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
-    const { subject, html } = renderCheckoutConfirmationEmail({
-      tier,
-      amountPhp: amount,
-      periodEnd: periodEnd.toISOString(),
-      displayName: profile.display_name,
-      appUrl,
-    });
-    const result = await sendTransactionalEmail({ to: profile.email, subject, html });
-    if (!result.sent && !result.skipped) {
-      console.error("checkout_email_failed:", result.error);
-    }
   }
 
   const { error: ledgerError } = await admin.from("payments").upsert(
@@ -108,6 +87,32 @@ export async function applyPaidUpgrade(
     // The profile is already upgraded; a ledger write failure is non-fatal but
     // worth logging for reconciliation.
     console.error("apply_upgrade_ledger_failed:", ledgerError.message);
+  }
+
+  const { error: purchaseError } = await admin.from("purchases").upsert(
+    {
+      user_id: userId,
+      provider: "paymongo",
+      provider_ref: providerRef,
+      product_name: `${TIERS[tier].label} plan`,
+      ...(amount !== undefined ? { amount } : {}),
+      currency: "PHP",
+      status: "completed",
+      metadata: {
+        tier,
+        seats,
+        billing_period: period,
+        period_end: periodEnd.toISOString(),
+      },
+    },
+    { onConflict: "provider,provider_ref", ignoreDuplicates: true },
+  );
+
+  if (purchaseError) {
+    // Email dispatch is event-driven through the purchases webhook. A purchase
+    // event failure should not roll back access, but it must be visible for
+    // reconciliation and manual resend.
+    console.error("purchase_event_insert_failed:", purchaseError.message);
   }
 
   return { periodEnd: periodEnd.toISOString() };

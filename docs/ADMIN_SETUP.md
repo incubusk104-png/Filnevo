@@ -267,9 +267,10 @@ The OAuth round-trip is: app → Google → **Supabase** callback → app
 
 No extra app env vars are needed for Google — the provider lives in Supabase.
 Set `APP_URL` to the live domain so email-confirmation and checkout redirects
-also resolve to production. Manual email/password sign-up works as soon as
-Supabase is configured (enable "Confirm email" in Auth settings for
-verification).
+also resolve to production. Manual email/password sign-up requires
+**Authentication → Providers → Email → Confirm email** to be enabled; Filnevo
+fails closed if Supabase returns an immediate signup session because that means
+no verification code was required.
 
 ---
 
