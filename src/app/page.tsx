@@ -5,6 +5,7 @@ import ArchitectureSection from "@/components/landing/ArchitectureSection";
 import PricingSection from "@/components/landing/PricingSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import CTASection from "@/components/landing/CTASection";
+import Footer from "@/components/landing/Footer";
 import Reveal from "@/components/landing/Reveal";
 
 export default function Home() {
@@ -27,6 +28,7 @@ export default function Home() {
       <Reveal>
         <CTASection />
       </Reveal>
+      <Footer />
     </div>
   );
 }
