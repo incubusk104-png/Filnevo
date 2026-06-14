@@ -21,10 +21,10 @@ export default function Footer() {
 
           {/* Navigation Links (Secondary) */}
           <div className="flex flex-wrap justify-center gap-x-10 gap-y-4">
-            <a href="#features" className="text-sm font-medium text-text-muted hover:text-foreground transition-colors">Features</a>
-            <a href="#pricing" className="text-sm font-medium text-text-muted hover:text-foreground transition-colors">Pricing</a>
-            <a href="#testimonials" className="text-sm font-medium text-text-muted hover:text-foreground transition-colors">Testimonials</a>
-            <a href="/login" className="text-sm font-medium text-text-muted hover:text-foreground transition-colors">Sign In</a>
+            <a href="#features" className="text-sm font-metrics font-medium text-text-muted hover:text-foreground transition-colors uppercase tracking-wider">Features</a>
+            <a href="#pricing" className="text-sm font-metrics font-medium text-text-muted hover:text-foreground transition-colors uppercase tracking-wider">Pricing</a>
+            <a href="#testimonials" className="text-sm font-metrics font-medium text-text-muted hover:text-foreground transition-colors uppercase tracking-wider">Testimonials</a>
+            <a href="/login" className="text-sm font-metrics font-medium text-text-muted hover:text-foreground transition-colors uppercase tracking-wider">Sign In</a>
           </div>
 
           {/* Social Links */}
