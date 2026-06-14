@@ -73,7 +73,7 @@ export async function signIn(
     options: { captchaToken: captchaToken(formData) },
   });
 
-  const next = safeNextPath(formData.get("next") as string | null);
+  const next = safeNextPath(formData.get("next") as string | null, "/dashboard");
 
   if (error) {
     // If the user hasn't confirmed their email yet, redirect them to the
@@ -81,7 +81,7 @@ export async function signIn(
     if (error.message === "Email not confirmed") {
       const verifyUrl =
         `/login?step=verify&email=${encodeURIComponent(parsed.data.email)}` +
-        (next !== "/" ? `&next=${encodeURIComponent(next)}` : "");
+        (next !== "/dashboard" ? `&next=${encodeURIComponent(next)}` : "");
       redirect(verifyUrl);
     }
     return { error: error.message };
@@ -141,7 +141,7 @@ export async function signUp(
     };
   }
 
-  const next = safeNextPath(formData.get("next") as string | null);
+  const next = safeNextPath(formData.get("next") as string | null, "/dashboard");
 
   // Email confirmation disabled — a session is returned immediately.
   if (data.session) {
@@ -154,7 +154,7 @@ export async function signUp(
   // post-auth destination through so they land where they intended.
   const verifyUrl =
     `/login?step=verify&email=${encodeURIComponent(parsed.data.email)}` +
-    (next !== "/" ? `&next=${encodeURIComponent(next)}` : "");
+    (next !== "/dashboard" ? `&next=${encodeURIComponent(next)}` : "");
   redirect(verifyUrl);
 }
 
@@ -207,7 +207,7 @@ export async function verifyEmail(
     }
   }
 
-  const next = safeNextPath(formData.get("next") as string | null);
+  const next = safeNextPath(formData.get("next") as string | null, "/dashboard");
   revalidatePath("/", "layout");
   redirect(next);
 }
@@ -258,10 +258,10 @@ export async function requestPasswordReset(
     captchaToken: captchaToken(formData),
   });
 
-  const next = safeNextPath(formData.get("next") as string | null);
+  const next = safeNextPath(formData.get("next") as string | null, "/dashboard");
   const resetUrl =
     `/login?step=reset&email=${encodeURIComponent(email)}` +
-    (next !== "/" ? `&next=${encodeURIComponent(next)}` : "");
+    (next !== "/dashboard" ? `&next=${encodeURIComponent(next)}` : "");
   redirect(resetUrl);
 }
 
@@ -316,7 +316,7 @@ export async function resetPassword(
   });
   if (updateError) return { error: updateError.message };
 
-  const next = safeNextPath(formData.get("next") as string | null);
+  const next = safeNextPath(formData.get("next") as string | null, "/dashboard");
   revalidatePath("/", "layout");
   redirect(next);
 }
