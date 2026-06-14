@@ -97,8 +97,8 @@ export function renderCheckoutConfirmationEmail(
             <p style="margin:0;font-family:'Hanken Grotesk', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:12px;line-height:1.6;color:#475569;">
               This is your payment confirmation. If you didn&rsquo;t make this purchase, contact support right away.
             </p>
-            <p style="margin:20px 0 0 0;font-family:'Space Grotesk', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:12px;font-weight:600;color:#3b82f6;text-transform:uppercase;letter-spacing:0.15em;">
-              &copy; 2026 Filnevo
+            <p style="margin:20px 0 0 0;font-family:'Bricolage Grotesque', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:14px;font-weight:700;color:#e6e9f0;letter-spacing:-0.02em;">
+              &copy; 2026 <span style="color:#3b82f6;">Filnevo</span>
             </p>
             <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px;">
               <tr>
