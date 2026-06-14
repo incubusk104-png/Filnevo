@@ -72,9 +72,20 @@ export async function signIn(
     ...parsed.data,
     options: { captchaToken: captchaToken(formData) },
   });
-  if (error) return { error: error.message };
 
   const next = safeNextPath(formData.get("next") as string | null);
+
+  if (error) {
+    // If the user hasn't confirmed their email yet, redirect them to the
+    // verification screen instead of just showing an error.
+    if (error.message === "Email not confirmed") {
+      const verifyUrl =
+        `/login?step=verify&email=${encodeURIComponent(parsed.data.email)}` +
+        (next !== "/" ? `&next=${encodeURIComponent(next)}` : "");
+      redirect(verifyUrl);
+    }
+    return { error: error.message };
+  }
   revalidatePath("/", "layout");
   redirect(next);
 }
@@ -170,12 +181,27 @@ export async function verifyEmail(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({
+  // Try 'signup' first (for regular registrations).
+  let { error } = await supabase.auth.verifyOtp({
     email: parsed.data.email,
     token: parsed.data.token,
     type: "signup",
   });
-  if (error) return { error: error.message };
+
+  // If that fails, it might be an 'invite' (for manually created/invited accounts).
+  if (error) {
+    const { error: inviteError } = await supabase.auth.verifyOtp({
+      email: parsed.data.email,
+      token: parsed.data.token,
+      type: "invite",
+    });
+    if (!inviteError) {
+      error = null;
+    } else {
+      // If both failed, return the original error (usually "Token has expired or is invalid").
+      return { error: error.message };
+    }
+  }
 
   const next = safeNextPath(formData.get("next") as string | null);
   revalidatePath("/", "layout");
