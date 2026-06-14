@@ -72,15 +72,15 @@ export function renderCheckoutConfirmationEmail(
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0e17;border:1px solid #1e293b;border-radius:16px;">
               <tr>
                 <td style="padding:16px 20px;font-family:'Hanken Grotesk', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:13px;color:#94a3b8;">Plan</td>
-                <td align="right" style="padding:16px 20px;font-family:'Space Grotesk', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:13px;font-weight:600;color:#e6e9f0;">${planLabel}</td>
+                <td align="right" style="padding:16px 20px;font-family:'Space Grotesk', 'SFMono-Regular', Consolas, monospace;font-size:13px;font-weight:600;color:#e6e9f0;">${planLabel}</td>
               </tr>
               <tr>
                 <td style="padding:0 20px 16px 20px;font-family:'Hanken Grotesk', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:13px;color:#94a3b8;">Amount paid</td>
-                <td align="right" style="padding:0 20px 16px 20px;font-family:'Space Grotesk', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:13px;font-weight:600;color:#34d399;">${formatPhp(amount)}</td>
+                <td align="right" style="padding:0 20px 16px 20px;font-family:'Space Grotesk', 'SFMono-Regular', Consolas, monospace;font-size:13px;font-weight:600;color:#34d399;">${formatPhp(amount)}</td>
               </tr>
               ${renews ? `<tr>
                 <td style="padding:0 20px 16px 20px;font-family:'Hanken Grotesk', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:13px;color:#94a3b8;">Renews / valid until</td>
-                <td align="right" style="padding:0 20px 16px 20px;font-family:'Space Grotesk', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:13px;font-weight:600;color:#e6e9f0;">${renews}</td>
+                <td align="right" style="padding:0 20px 16px 20px;font-family:'Space Grotesk', 'SFMono-Regular', Consolas, monospace;font-size:13px;font-weight:600;color:#e6e9f0;">${renews}</td>
               </tr>` : ""}
             </table>
           </td>
