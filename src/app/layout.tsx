@@ -6,6 +6,8 @@ import {
   IBM_Plex_Mono,
 } from "next/font/google";
 import "./globals.css";
+import { Sidebar } from "@/components/dashboard/Sidebar";
+import { createClient } from "@/lib/supabase/server";
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
@@ -41,25 +43,37 @@ export const metadata: Metadata = {
     "From zero-entry document capture to automated BIR form filling, Filnevo delivers accurate, on-time tax filings — saving you hours every month.",
 };
 
-// Ensures correct mobile scaling and lets the layout extend under device
-// notches/safe-areas while still allowing users to pinch-zoom (accessibility).
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <html
       lang="en"
       className={`${bricolage.variable} ${hanken.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {user ? (
+          <div className="flex min-h-screen bg-background">
+            <Sidebar />
+            <main className="flex-1 overflow-y-auto">
+              {children}
+            </main>
+          </div>
+        ) : (
+          <>{children}</>
+        )}
+      </body>
     </html>
   );
 }
