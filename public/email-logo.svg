@@ -4,6 +4,11 @@
       <stop stop-color="#3b82f6" />
       <stop offset="1" stop-color="#06b6d4" />
     </linearGradient>
+    <linearGradient id="textGrad" x1="50" y1="20" x2="120" y2="20" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3b82f6" />
+      <stop offset="0.45" stop-color="#4f86f7" />
+      <stop offset="1" stop-color="#06b6d4" />
+    </linearGradient>
   </defs>
   <rect x="2.5" y="2.5" width="35" height="35" rx="10" fill="url(#flnGrad)" fill-opacity="0.12" stroke="url(#flnGrad)" stroke-width="1.5" />
   <g stroke="url(#flnGrad)" stroke-width="2.2" stroke-linecap="round" opacity="0.5">
@@ -17,5 +22,5 @@
     <path d="M15 19.5 H22" />
     <path d="M19 16.5 L22.5 19.5 L19 22.5" />
   </g>
-  <text x="50" y="27" fill="#e6e9f0" style="font-family: sans-serif; font-size: 20px; font-weight: bold;">Filnevo</text>
+  <text x="50" y="27" fill="url(#textGrad)" style="font-family: sans-serif; font-size: 20px; font-weight: bold; letter-spacing: -0.025em;">Filnevo</text>
 </svg>
