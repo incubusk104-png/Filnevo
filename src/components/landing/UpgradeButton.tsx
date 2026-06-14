@@ -30,6 +30,21 @@ export function UpgradeButton({ tier, children, variant = "primary", seats, peri
   const [loading, setLoading] = useState(false);
 
   async function startPayment() {
+    // Free tier doesn't go to payment; it goes to the dashboard if signed in,
+    // or signup if guest.
+    if (tier === "free") {
+      if (isSupabaseConfiguredClient()) {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          window.location.href = "/dashboard";
+          return;
+        }
+      }
+      window.location.href = "/login?mode=signup";
+      return;
+    }
+
     setLoading(true);
     const qs = new URLSearchParams({ tier });
     if (seats !== undefined) qs.set("seats", String(seats));

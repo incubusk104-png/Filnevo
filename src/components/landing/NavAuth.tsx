@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, LogOut, Mail } from "lucide-react";
+import { ChevronDown, LayoutDashboard, LogOut, Mail } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { createClient, isSupabaseConfiguredClient } from "@/lib/supabase/client";
 
@@ -140,6 +140,14 @@ export default function NavAuth() {
               {providerMeta(provider).label}
             </span>
           </div>
+          <a
+            href="/dashboard"
+            role="menuitem"
+            className="flex w-full items-center gap-2.5 px-4 py-3 text-left font-metrics text-sm text-neutral-200 transition-colors hover:bg-neutral-900/70 hover:text-velocity-blue"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            Go to Dashboard
+          </a>
           <button
             type="button"
             role="menuitem"

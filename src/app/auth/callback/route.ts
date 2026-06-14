@@ -11,7 +11,7 @@ export const runtime = "edge";
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
-  const next = url.searchParams.get("next") ?? "/";
+  const next = url.searchParams.get("next") ?? "/dashboard";
   const origin = process.env.APP_URL?.replace(/\/$/, "") ?? url.origin;
 
   if (isDemoMode()) {
