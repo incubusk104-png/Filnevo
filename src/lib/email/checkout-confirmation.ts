@@ -64,7 +64,7 @@ export function renderCheckoutConfirmationEmail(
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#0f1420;border:1px solid #1e293b;border-radius:16px;overflow:hidden;">
         <tr>
           <td style="padding:28px 32px 8px 32px;">
-            <img src="${appUrl}/email-logo.png" width="140" alt="Filnevo" style="display:block;border:0;outline:none;text-decoration:none;max-width:140px;height:auto;" />
+            <img src="${appUrl}/email-logo.svg" width="140" alt="Filnevo" style="display:block;border:0;outline:none;text-decoration:none;max-width:140px;height:auto;" />
           </td>
         </tr>
         <tr>

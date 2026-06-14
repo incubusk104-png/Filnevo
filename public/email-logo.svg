@@ -1,0 +1,21 @@
+<svg width="140" height="40" viewBox="0 0 140 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="flnGrad" x1="4" y1="4" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3b82f6" />
+      <stop offset="1" stop-color="#06b6d4" />
+    </linearGradient>
+  </defs>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="10" fill="url(#flnGrad)" fill-opacity="0.12" stroke="url(#flnGrad)" stroke-width="1.5" />
+  <g stroke="url(#flnGrad)" stroke-width="2.2" stroke-linecap="round" opacity="0.5">
+    <path d="M6 16 H10" />
+    <path d="M5.5 22 H9" />
+  </g>
+  <g stroke="url(#flnGrad)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 11 V29" />
+    <path d="M15 11 H25" />
+    <path d="M22 7.5 L25.5 11 L22 14.5" />
+    <path d="M15 19.5 H22" />
+    <path d="M19 16.5 L22.5 19.5 L19 22.5" />
+  </g>
+  <text x="50" y="27" fill="#e6e9f0" style="font-family: sans-serif; font-size: 20px; font-weight: bold;">Filnevo</text>
+</svg>

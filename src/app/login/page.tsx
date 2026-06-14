@@ -60,7 +60,7 @@ export default async function LoginPage({
               Verify your email
             </h1>
             <p className="mt-1.5 font-body text-sm text-text-muted">
-              Enter the 6-digit code we sent to{" "}
+              Enter the verification code we sent to{" "}
               <span className="text-neutral-200">{email}</span> to activate your
               free trial.
             </p>
@@ -68,7 +68,7 @@ export default async function LoginPage({
             {!configured && (
               <p className="mt-4 flex items-center gap-2 rounded-md border border-hairline bg-neutral-900/50 px-3 py-2 font-body text-xs text-text-muted">
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning-amber" />
-                Demo mode — any 6-digit code is accepted until Supabase is
+                Demo mode — any code is accepted until Supabase is
                 configured.
               </p>
             )}
@@ -81,7 +81,7 @@ export default async function LoginPage({
               Reset your password
             </h1>
             <p className="mt-1.5 font-body text-sm text-text-muted">
-              Enter your account email and we&apos;ll send a 6-digit
+              Enter your account email and we&apos;ll send a
               verification code to reset your password.
             </p>
 
@@ -101,7 +101,7 @@ export default async function LoginPage({
               Set a new password
             </h1>
             <p className="mt-1.5 font-body text-sm text-text-muted">
-              Enter the 6-digit code we sent to{" "}
+              Enter the verification code we sent to{" "}
               <span className="text-neutral-200">{email}</span> and choose a new
               password for your account.
             </p>
@@ -109,7 +109,7 @@ export default async function LoginPage({
             {!configured && (
               <p className="mt-4 flex items-center gap-2 rounded-md border border-hairline bg-neutral-900/50 px-3 py-2 font-body text-xs text-text-muted">
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning-amber" />
-                Demo mode — any 6-digit code is accepted until Supabase is
+                Demo mode — any code is accepted until Supabase is
                 configured.
               </p>
             )}
