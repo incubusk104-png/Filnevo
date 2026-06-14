@@ -18,11 +18,12 @@ referenced as `{{ .SiteURL }}/email-logo.png` in these templates and
 `${APP_URL}/email-logo.png` in the checkout confirmation email. To make it
 render:
 
-1. Add a transparent-background **PNG** (~240px wide) at
-   [`public/email-logo.png`](../../public/email-logo.png) in this repo, so it
-   serves from `https://<your-domain>/email-logo.png` after deploy.
+1. A high-fidelity **PNG** of the original Filnevo logo is provided at
+   [`public/email-logo.png`](../../public/email-logo.png). It serves from
+   `https://<your-domain>/email-logo.png` after deploy.
 2. In Supabase → **Authentication → URL Configuration**, set **Site URL** to
-   your live domain (e.g. `https://filnevo.com`) so `{{ .SiteURL }}` resolves.
+   your live domain (e.g. `https://filnevo.com`) so `{{ .SiteURL }}` resolves
+   and the logo is not cracked in the dashboard preview or sent emails.
 3. If the image is missing, clients fall back to the `alt="Filnevo"` text.
 
 ## Templates → Supabase mapping
