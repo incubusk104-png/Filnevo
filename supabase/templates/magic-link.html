@@ -3,11 +3,11 @@
 
   Paste this into Supabase: Dashboard → Authentication → Emails →
   "Magic Link" (a.k.a. "Magic link or OTP") → Message body (source).
-  It surfaces the 6-digit {{ .Token }} sign-in code and a fallback
+  It surfaces the {{ .Token }} sign-in code and a fallback
   {{ .ConfirmationURL }} magic link.
 
   Supabase template variables used:
-    {{ .Token }}            6-digit one-time sign-in code
+    {{ .Token }}            one-time sign-in code
     {{ .ConfirmationURL }}  fallback magic-link
     {{ .SiteURL }}          configured Site URL
 
@@ -22,7 +22,7 @@
         <!-- Brand header -->
         <tr>
           <td style="padding:28px 32px 8px 32px;">
-            <img src="{{ .SiteURL }}/email-logo.png" width="140" alt="Filnevo" style="display:block;border:0;outline:none;text-decoration:none;max-width:140px;height:auto;" />
+            <img src="{{ .SiteURL }}/email-logo.svg" width="140" alt="Filnevo" style="display:block;border:0;outline:none;text-decoration:none;max-width:140px;height:auto;" />
           </td>
         </tr>
 
@@ -33,7 +33,7 @@
               Your sign-in code
             </h1>
             <p style="margin:10px 0 0 0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#94a3b8;">
-              Enter this 6-digit code on the sign-in screen to access your Filnevo account.
+              Enter this code on the sign-in screen to access your Filnevo account.
             </p>
           </td>
         </tr>

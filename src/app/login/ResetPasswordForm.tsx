@@ -89,11 +89,11 @@ export function ResetPasswordForm({
             name="token"
             inputMode="numeric"
             autoComplete="one-time-code"
-            pattern="\d{6}"
-            maxLength={6}
+            pattern="\d{6,8}"
+            maxLength={8}
             required
             disabled={!captchaOk}
-            placeholder="••••••"
+            placeholder="••••••••"
             className="form-input mt-1.5 text-center font-data text-lg tracking-[0.5em] disabled:cursor-not-allowed"
           />
         </label>

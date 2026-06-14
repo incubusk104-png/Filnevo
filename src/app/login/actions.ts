@@ -23,7 +23,7 @@ const verifySchema = z.object({
   token: z
     .string()
     .trim()
-    .regex(/^\d{6}$/, "Enter the 6-digit code from your email."),
+    .regex(/^\d{6,8}$/, "Enter the verification code from your email."),
 });
 
 const resetSchema = z.object({
@@ -31,7 +31,7 @@ const resetSchema = z.object({
   token: z
     .string()
     .trim()
-    .regex(/^\d{6}$/, "Enter the 6-digit code from your email."),
+    .regex(/^\d{6,8}$/, "Enter the verification code from your email."),
   password: z.string().min(1, "Password is required."),
 });
 
@@ -181,11 +181,14 @@ export async function verifyEmail(
   }
 
   const supabase = await createClient();
+  const captcha = captchaToken(formData);
+
   // Try 'signup' first (for regular registrations).
   let { error } = await supabase.auth.verifyOtp({
     email: parsed.data.email,
     token: parsed.data.token,
     type: "signup",
+    options: { captchaToken: captcha },
   });
 
   // If that fails, it might be an 'invite' (for manually created/invited accounts).
@@ -194,6 +197,7 @@ export async function verifyEmail(
       email: parsed.data.email,
       token: parsed.data.token,
       type: "invite",
+      options: { captchaToken: captcha },
     });
     if (!inviteError) {
       error = null;
@@ -303,6 +307,7 @@ export async function resetPassword(
     email: parsed.data.email,
     token: parsed.data.token,
     type: "recovery",
+    options: { captchaToken: captchaToken(formData) },
   });
   if (otpError) return { error: otpError.message };
 

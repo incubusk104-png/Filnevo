@@ -7,7 +7,7 @@
   supabase.auth.verifyOtp({ type: "signup" })), so the email and the UI match.
 
   Supabase template variables used:
-    {{ .Token }}            6-digit one-time verification code
+    {{ .Token }}            one-time verification code
     {{ .ConfirmationURL }}  fallback magic-link (optional)
     {{ .SiteURL }}          configured Site URL
 
@@ -22,7 +22,7 @@
         <!-- Brand header -->
         <tr>
           <td style="padding:28px 32px 8px 32px;">
-            <img src="{{ .SiteURL }}/email-logo.png" width="140" alt="Filnevo" style="display:block;border:0;outline:none;text-decoration:none;max-width:140px;height:auto;" />
+            <img src="{{ .SiteURL }}/email-logo.svg" width="140" alt="Filnevo" style="display:block;border:0;outline:none;text-decoration:none;max-width:140px;height:auto;" />
           </td>
         </tr>
 
@@ -33,7 +33,7 @@
               Confirm your email
             </h1>
             <p style="margin:10px 0 0 0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#94a3b8;">
-              Enter this 6-digit code on the verification screen to activate your free trial.
+              Enter this code on the verification screen to activate your free trial.
             </p>
           </td>
         </tr>
