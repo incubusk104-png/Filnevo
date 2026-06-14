@@ -108,8 +108,16 @@ export function renderCheckoutConfirmationEmail(
               This is your payment confirmation. If you didn&rsquo;t make this purchase, contact support right away.
             </p>
             <p style="margin:12px 0 0 0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:12px;color:#475569;">
-              &copy; Filnevo
+              &copy; 2026 Filnevo
             </p>
+            <div style="margin-top:16px;">
+              <a href="https://facebook.com/filnevo" style="display:inline-block;margin-right:16px;text-decoration:none;">
+                <img src="https://img.icons8.com/material-rounded/24/3b82f6/facebook-new.png" width="20" height="20" alt="Facebook" style="display:block;border:0;" />
+              </a>
+              <a href="https://instagram.com/filnevo" style="display:inline-block;text-decoration:none;">
+                <img src="https://img.icons8.com/material-rounded/24/06b6d4/instagram-new.png" width="20" height="20" alt="Instagram" style="display:block;border:0;" />
+              </a>
+            </div>
           </td>
         </tr>
       </table>
