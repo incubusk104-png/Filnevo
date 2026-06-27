@@ -1,25 +1,22 @@
 /**
  * Mode detection utility to distinguish between demo and production mode.
  * Demo mode is active when Supabase credentials are not configured.
- *
- * Checks both server-side and client-side (public) environment variables
- * to ensure consistent behavior across SSR and browser environments.
  */
 
 export function isDemoMode(): boolean {
-  // Server-side check
-  const hasServerVars =
+  // Use a simpler, more robust check for environment variables.
+  // We prioritize the presence of ANY of the required Supabase keys.
+  const hasServerKeys =
     typeof process !== 'undefined' &&
-    process.env !== undefined &&
+    process.env &&
     !!process.env.SUPABASE_URL &&
     !!process.env.SUPABASE_ANON_KEY;
 
-  // Client-side (public) check
-  const hasPublicVars =
+  const hasPublicKeys =
     !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
     !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  return !(hasServerVars || hasPublicVars);
+  return !(hasServerKeys || hasPublicKeys);
 }
 
 export function isProductionMode(): boolean {

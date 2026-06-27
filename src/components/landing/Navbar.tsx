@@ -1,8 +1,17 @@
+"use client";
+
 import { Logo } from "@/components/shared/Logo";
 import NavAuth from "@/components/landing/NavAuth";
 import MobileNav from "@/components/landing/MobileNav";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Navbar() {
+  const { user, loading } = useAuth();
+
+  // If authenticated, hide the navbar to avoid double headers with the Sidebar.
+  // We check `!loading` to avoid a flicker.
+  if (!loading && user) return null;
+
   return (
     <header className="sticky top-0 z-50 border-b border-neutral-800/60 bg-background/70 backdrop-blur-xl">
       <nav

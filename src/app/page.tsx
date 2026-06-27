@@ -2,21 +2,17 @@ export const runtime = "edge";
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
-import { createClient } from "@/lib/supabase/server";
 import ArchitectureSection from "@/components/landing/ArchitectureSection";
 import PricingSection from "@/components/landing/PricingSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import CTASection from "@/components/landing/CTASection";
 import Reveal from "@/components/landing/Reveal";
 
-export default async function Home() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
+export default function Home() {
   return (
     <div id="top" className="min-h-screen bg-background text-foreground">
       <Navbar />
-      <HeroSection user={user} />
+      <HeroSection />
       <Reveal>
         <FeaturesSection />
       </Reveal>
@@ -30,7 +26,7 @@ export default async function Home() {
         <TestimonialsSection />
       </Reveal>
       <Reveal>
-        <CTASection user={user} />
+        <CTASection />
       </Reveal>
     </div>
   );
