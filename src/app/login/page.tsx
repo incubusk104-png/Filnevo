@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 import { safeNextPath } from "@/lib/auth/next";
 import { Logo } from "@/components/shared/Logo";
 import { LoginForm } from "./LoginForm";
@@ -24,6 +25,13 @@ export default async function LoginPage({
   const { error, mode, step, email, next } = await searchParams;
   const configured = isSupabaseConfigured();
   const signupMode = mode === "signup";
+
+  // If already authenticated, redirect away from the login page.
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    redirect(safeNextPath(next, "/dashboard"));
+  }
   // Post-auth destination (e.g. the plan the visitor tried to pay for before
   // being asked to sign in). Sanitized again server-side in the auth actions.
   const safeNext = safeNextPath(next);

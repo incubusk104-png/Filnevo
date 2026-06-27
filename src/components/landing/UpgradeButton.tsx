@@ -8,6 +8,7 @@ import {
   createClient,
   isSupabaseConfiguredClient,
 } from "@/lib/supabase/client";
+import { isDemoMode } from "@/lib/mode";
 
 interface UpgradeButtonProps {
   tier: SubscriptionTier;
@@ -30,6 +31,12 @@ export function UpgradeButton({ tier, children, variant = "primary", seats, peri
   const [loading, setLoading] = useState(false);
 
   async function startPayment() {
+    // In demo mode, we always go to the dashboard if a mock session is intended.
+    if (isDemoMode()) {
+      window.location.href = "/dashboard";
+      return;
+    }
+
     // Free tier doesn't go to payment; it goes to the dashboard if signed in,
     // or signup if guest.
     if (tier === "free") {

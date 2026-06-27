@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LayoutDashboard, LogOut, Mail } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { createClient, isSupabaseConfiguredClient } from "@/lib/supabase/client";
+import { isDemoMode } from "@/lib/mode";
 
 // Multi-colour Google "G" so a Google-authenticated session is recognisable at
 // a glance (lucide ships no brand mark for Google).
@@ -36,10 +37,24 @@ export default function NavAuth() {
   const [provider, setProvider] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [loading, setLoading] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isSupabaseConfiguredClient()) return;
+    // In demo mode, we always simulate a logged-in user to match the server-side
+    // mock behavior (which ensures the Sidebar is visible).
+    if (isDemoMode()) {
+      setEmail("demo@filnevo.com");
+      setProvider("email");
+      setLoading(false);
+      return;
+    }
+
+    if (!isSupabaseConfiguredClient()) {
+      setLoading(false);
+      return;
+    }
+
     const supabase = createClient();
     let active = true;
 
@@ -47,11 +62,13 @@ export default function NavAuth() {
       if (!active) return;
       setEmail(data.user?.email ?? null);
       setProvider(data.user?.app_metadata?.provider ?? null);
+      setLoading(false);
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setEmail(session?.user?.email ?? null);
       setProvider(session?.user?.app_metadata?.provider ?? null);
+      setLoading(false);
     });
 
     return () => {
@@ -84,6 +101,16 @@ export default function NavAuth() {
       await createClient().auth.signOut();
     }
     window.location.assign("/");
+  }
+
+  // Prevent UI flicker while the session is resolving.
+  if (loading) {
+    return (
+      <div className="flex items-center gap-3">
+        <div className="h-9 w-20 animate-pulse rounded-lg bg-neutral-800/40" />
+        <div className="h-9 w-24 animate-pulse rounded-lg bg-neutral-800/40" />
+      </div>
+    );
   }
 
   // Default (and while the session resolves): the public auth actions.

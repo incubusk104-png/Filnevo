@@ -1,6 +1,7 @@
 import { Button } from "@/components/shared/Button";
+import type { User } from "@supabase/supabase-js";
 
-export default function CTASection() {
+export default function CTASection({ user }: { user?: User | null }) {
   return (
     <section id="cta" className="relative scroll-mt-20 py-20 lg:py-24 overflow-hidden">
       {/* Background - subtle data visualization pattern */}
@@ -50,9 +51,15 @@ export default function CTASection() {
           <Button variant="outline" href="#features">
             Explore All Features
           </Button>
-          <Button variant="primary" href="/login?mode=signup">
-            Start Free Trial
-          </Button>
+          {user ? (
+            <Button variant="primary" href="/dashboard">
+              Go to Dashboard
+            </Button>
+          ) : (
+            <Button variant="primary" href="/login?mode=signup">
+              Start Free Trial
+            </Button>
+          )}
         </div>
 
         {/* Trust indicators */}
