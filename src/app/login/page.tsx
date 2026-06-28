@@ -25,6 +25,7 @@ export default async function LoginPage({
   const { error, mode, step, email, next } = await searchParams;
   const configured = isSupabaseConfigured();
   const signupMode = mode === "signup";
+  const safeNext = safeNextPath(next);
 
   // If already authenticated, redirect away from the login page.
   const supabase = await createClient();
@@ -32,9 +33,6 @@ export default async function LoginPage({
   if (user) {
     redirect(safeNextPath(next, "/dashboard"));
   }
-  // Post-auth destination (e.g. the plan the visitor tried to pay for before
-  // being asked to sign in). Sanitized again server-side in the auth actions.
-  const safeNext = safeNextPath(next);
 
   // The email verification step is rendered on this same route (rather than a
   // dedicated /login/verify page) so the auth flow ships as a single Edge

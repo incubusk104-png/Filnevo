@@ -7,12 +7,16 @@ import PricingSection from "@/components/landing/PricingSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import CTASection from "@/components/landing/CTASection";
 import Reveal from "@/components/landing/Reveal";
+import { createClient } from "@/lib/supabase/server";
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <div id="top" className="min-h-screen bg-background text-foreground">
       <Navbar />
-      <HeroSection />
+      <HeroSection user={user} />
       <Reveal>
         <FeaturesSection />
       </Reveal>
@@ -26,7 +30,7 @@ export default function Home() {
         <TestimonialsSection />
       </Reveal>
       <Reveal>
-        <CTASection />
+        <CTASection user={user} />
       </Reveal>
     </div>
   );

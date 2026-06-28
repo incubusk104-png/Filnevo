@@ -1,9 +1,7 @@
-"use client";
-
 import type { CSSProperties } from "react";
 import { Button } from "@/components/shared/Button";
 import AnimatedCounter from "./AnimatedCounter";
-import { useAuth } from "@/hooks/use-auth";
+import type { User } from "@supabase/supabase-js";
 
 const delay = (ms: number) => ({ "--enter-delay": `${ms}ms` }) as CSSProperties;
 
@@ -27,9 +25,7 @@ const formRows = [
   { label: "Output VAT", value: "₱154,140.00" },
 ];
 
-export default function HeroSection() {
-  const { user, loading } = useAuth();
-
+export default function HeroSection({ user }: { user?: User | null }) {
   return (
     <section className="relative isolate overflow-hidden">
       {/* Atmosphere */}
@@ -69,7 +65,7 @@ export default function HeroSection() {
           </p>
 
           <div className="enter mt-9 flex flex-col gap-4 sm:flex-row" style={delay(240)}>
-            {!loading && user ? (
+            {user ? (
               <Button variant="primary" size="lg" href="/dashboard" className="shadow-lg shadow-velocity-blue/20">
                 Go to Dashboard
               </Button>

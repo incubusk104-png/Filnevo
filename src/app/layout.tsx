@@ -6,8 +6,7 @@ import {
   IBM_Plex_Mono,
 } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/dashboard/Sidebar";
-import { createClient } from "@/lib/supabase/server";
+import { AppShell } from "@/components/shared/AppShell";
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
@@ -49,30 +48,20 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
   return (
     <html
       lang="en"
       className={`${bricolage.variable} ${hanken.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        {user ? (
-          <div className="flex min-h-screen bg-background">
-            <Sidebar />
-            <main className="flex-1 overflow-y-auto">
-              {children}
-            </main>
-          </div>
-        ) : (
-          <>{children}</>
-        )}
+        <AppShell>
+          {children}
+        </AppShell>
       </body>
     </html>
   );

@@ -1,5 +1,57 @@
 @import "tailwindcss";
 
+@theme {
+  /* Fonts */
+  --font-space-grotesk: "Space Grotesk", system-ui, sans-serif;
+  --font-ibm-plex-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-satoshi: "Satoshi", system-ui, sans-serif;
+  --font-inter: "Inter", system-ui, sans-serif;
+
+  --font-metrics: var(--font-space-grotesk);
+  --font-data: var(--font-ibm-plex-mono);
+  --font-heading: var(--font-bricolage), var(--font-satoshi), system-ui, sans-serif;
+  --font-body: var(--font-hanken), var(--font-inter), system-ui, sans-serif;
+
+  /* Accent colors */
+  --color-velocity-blue: #3b82f6;
+  --color-insight-cyan: #06b6d4;
+  --color-efficiency-green: #10b981;
+  --color-warning-amber: #f59e0b;
+  --color-alert-red: #ef4444;
+
+  /* Neutrals */
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+  --color-neutral-950: #020617;
+
+  /* Animation Keyframes */
+  @keyframes metric-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.02); opacity: 0.95; }
+  }
+  @keyframes data-flow {
+    0% { transform: translateX(-100%); opacity: 0; }
+    100% { transform: translateX(100%); opacity: 0; }
+  }
+  @keyframes insight-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.4); }
+    50% { box-shadow: 0 0 20px 4px rgba(6, 182, 212, 0.3); }
+  }
+
+  /* Animation classes */
+  --animate-metric-pulse: metric-pulse 3s ease-in-out infinite;
+  --animate-data-flow: data-flow 2s linear infinite;
+  --animate-insight-glow: insight-glow 2s ease-in-out infinite;
+}
+
 /* ============================================================================
    CAVEAT VAULT — "PRECISION METRICS" DESIGN SYSTEM
    Clean analytical foundation with purposeful motion and data-focused clarity
@@ -10,26 +62,6 @@
   /* Dark analytical base */
   --background: #0a0e17;
   --foreground: #e6e9f0;
-
-  /* Neutral ramp for data density */
-  --neutral-50: #f8fafc;
-  --neutral-100: #f1f5f9;
-  --neutral-200: #e2e8f0;
-  --neutral-300: #cbd5e1;
-  --neutral-400: #94a3b8;
-  --neutral-500: #64748b;
-  --neutral-600: #475569;
-  --neutral-700: #334155;
-  --neutral-800: #1e293b;
-  --neutral-900: #0f172a;
-  --neutral-950: #020617;
-
-  /* Purposeful accent colors for metrics and status */
-  --velocity-blue: #3b82f6;    /* Primary - conveys speed and technology */
-  --insight-cyan: #06b6d4;     /* Secondary - for insights and analytics */
-  --efficiency-green: #10b981; /* Success - positive metrics and completions */
-  --warning-amber: #f59e0b;    /* Warning - attention needed */
-  --alert-red: #ef4444;        /* Error - critical issues */
 
   /* Specialized colors for data visualization */
   --chart-bg: rgba(59, 130, 246, 0.08);
@@ -44,9 +76,7 @@
   --input-bg: #111827;
   --input-border: #374151;
 
-  /* Secondary / supporting text — previously undefined, which left every
-     `text-text-muted` element rendering at full foreground brightness and
-     killed the visual hierarchy. */
+  /* Secondary / supporting text */
   --text-muted: #94a3b8;
   --text-faint: #64748b;
 
@@ -54,57 +84,6 @@
   --brand-from: #3b82f6;
   --brand-via: #4f86f7;
   --brand-to: #06b6d4;
-}
-
-/* Typography - optimized for data density and readability */
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-
-  /* Neutrals */
-  --color-neutral-50: var(--neutral-50);
-  --color-neutral-100: var(--neutral-100);
-  --color-neutral-200: var(--neutral-200);
-  --color-neutral-300: var(--neutral-300);
-  --color-neutral-400: var(--neutral-400);
-  --color-neutral-500: var(--neutral-500);
-  --color-neutral-600: var(--neutral-600);
-  --color-neutral-700: var(--neutral-700);
-  --color-neutral-800: var(--neutral-800);
-  --color-neutral-900: var(--neutral-900);
-  --color-neutral-950: var(--neutral-950);
-
-  /* Accents */
-  --color-velocity-blue: var(--velocity-blue);
-  --color-insight-cyan: var(--insight-cyan);
-  --color-efficiency-green: var(--efficiency-green);
-  --color-warning-amber: var(--warning-amber);
-  --color-alert-red: var(--alert-red);
-
-  /* Inputs + surfaces */
-  --color-hairline: var(--hairline);
-  --color-input-bg: var(--input-bg);
-  --color-input-border: var(--input-border);
-
-  /* Text tones */
-  --color-text-muted: var(--text-muted);
-  --color-text-faint: var(--text-faint);
-
-  /* Chart colors */
-  --color-chart-bg: var(--chart-bg);
-  --color-chart-grid: var(--chart-grid);
-  --color-chart-primary: var(--chart-primary);
-  --color-chart-secondary: var(--chart-secondary);
-  --color-chart-success: var(--chart-success);
-  --color-chart-warning: var(--chart-warning);
-  --color-chart-danger: var(--chart-danger);
-
-  /* Fonts — loaded via next/font in layout.tsx and exposed as CSS variables.
-     Mapped to semantic roles here so component class names stay stable. */
-  --font-heading: var(--font-bricolage), system-ui, sans-serif;   /* Display headings — distinctive, editorial */
-  --font-body: var(--font-hanken), system-ui, sans-serif;         /* Body — refined, highly readable */
-  --font-metrics: var(--font-space-grotesk), system-ui, sans-serif; /* Numbers — geometric, tabular */
-  --font-data: var(--font-ibm-plex-mono), ui-monospace, monospace;  /* Code, IDs, technical data */
 }
 
 body {
@@ -224,47 +203,6 @@ body {
   }
 }
 
-/* Purposeful motion - subtle, meaningful animations */
-@keyframes metric-pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.02); opacity: 0.95; }
-}
-.animate-metric-pulse {
-  animation: metric-pulse 3s ease-in-out infinite;
-}
-
-@keyframes data-flow {
-  0% { transform: translateX(-100%); opacity: 0; }
-  100% { transform: translateX(100%); opacity: 0; }
-}
-.animate-data-flow {
-  position: relative;
-  overflow: hidden;
-}
-.animate-data-flow::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(59, 130, 246, 0.2),
-    transparent
-  );
-  animation: data-flow 2s linear infinite;
-}
-
-@keyframes insight-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.4); }
-  50% { box-shadow: 0 0 20px 4px rgba(6, 182, 212, 0.3); }
-}
-.animate-insight-glow {
-  animation: insight-glow 2s ease-in-out infinite;
-}
-
 /* Micro-interactions */
 .scale-on-hover {
   @apply transition-transform duration-200;
@@ -280,12 +218,7 @@ body {
   @apply transform scale-[0.98];
 }
 
-/* Global tactile feedback — every interactive control gets a smooth, purposeful
-   transition and a subtle "press" on tap/click so nothing reads as flat or
-   instant. Duration stays in the 150–200ms band recommended for UI motion.
-   Native buttons cover most controls; anchor-styled CTAs opt in via the shared
-   <Button> / .press-effect. Disabled controls and reduced-motion users are
-   excluded. */
+/* Global tactile feedback */
 @media (prefers-reduced-motion: no-preference) {
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]) {
@@ -366,25 +299,26 @@ html {
 
 /* Form elements */
 .form-input {
-  @apply block w-full rounded-md bg-input-bg border border-input-border px-4 py-3
+  @apply block w-full rounded-md bg-neutral-900 border border-neutral-800 px-4 py-3
          text-neutral-100 placeholder-neutral-400 focus:border-insight-cyan
          focus:ring-2 focus:ring-inset focus:ring-insight-cyan/50
          focus:bg-neutral-900 sm:text-base;
 }
 
 .form-select {
-  @apply block w-full rounded-md bg-input-bg border border-input-border px-4 py-3
+  @apply block w-full rounded-md bg-neutral-900 border border-neutral-800 px-4 py-3
          text-neutral-100 placeholder-neutral-400 focus:border-insight-cyan
          focus:ring-2 focus:ring-inset focus:ring-insight-cyan/50
          focus:bg-neutral-900 sm:text-base;
 }
 
 .form-textarea {
-  @apply block w-full rounded-md bg-input-bg border border-input-border px-4 py-3
+  @apply block w-full rounded-md bg-neutral-900 border border-neutral-800 px-4 py-3
          text-neutral-100 placeholder-neutral-400 focus:border-insight-cyan
          focus:ring-2 focus:ring-inset focus:ring-insight-cyan/50
          focus:bg-neutral-900 sm:text-base resize-y;
 }
+
 /* ============================================================================
    ATMOSPHERE & MOTION LAYER — added for the landing redesign
    ========================================================================== */
@@ -402,7 +336,7 @@ html {
   color: transparent;
 }
 
-/* Shimmering brand text (animated sheen across the gradient) */
+/* Shimmering brand text */
 .text-shimmer {
   background: linear-gradient(
     100deg,
@@ -431,7 +365,7 @@ html {
   border-radius: 999px;
   border: 1px solid rgba(59, 130, 246, 0.25);
   background: rgba(59, 130, 246, 0.08);
-  color: var(--insight-cyan);
+  color: #06b6d4;
   font-family: var(--font-metrics);
   font-size: 0.7rem;
   font-weight: 600;
@@ -483,7 +417,7 @@ html {
   50% { transform: translateY(-12px); }
 }
 
-/* Staggered entrance — apply .enter and set --enter-delay on children */
+/* Staggered entrance */
 @keyframes enter-up {
   from { opacity: 0; transform: translateY(22px); }
   to { opacity: 1; transform: translateY(0); }
@@ -500,9 +434,7 @@ html {
 }
 .spin-slow { animation: spin-slow 24s linear infinite; }
 
-/* Toast / inline notification — springy entrance with a sweeping accent line.
-   Apply `.notice-in` to the container; the ::before draws a left accent bar
-   that grows in. Re-mount with a `key` to replay on message change. */
+/* Toast / inline notification */
 @keyframes notice-in {
   0%   { opacity: 0; transform: translateY(-8px) scale(0.97); }
   60%  { opacity: 1; transform: translateY(2px) scale(1.005); }
@@ -526,9 +458,7 @@ html {
   animation: notice-bar 0.5s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Animated buttons — a soft "sheen" sweeps across on hover, with a subtle lift.
-   Applied via the shared <Button> (and the Google control) so calls-to-action
-   never read as flat/plain. */
+/* Animated buttons */
 .btn-anim {
   position: relative;
   overflow: hidden;
@@ -553,12 +483,11 @@ html {
   transform: translateX(130%);
 }
 
-/* Inline text toggle (e.g. "Sign in" / "Create an account") with an underline
-   that grows from the left on hover. */
+/* Inline text toggle */
 .auth-toggle-link {
   position: relative;
   font-weight: 600;
-  color: var(--insight-cyan);
+  color: #06b6d4;
   transition: color 0.2s ease;
 }
 .auth-toggle-link::after {
@@ -574,7 +503,7 @@ html {
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .auth-toggle-link:hover {
-  color: var(--velocity-blue);
+  color: #3b82f6;
 }
 .auth-toggle-link:hover::after,
 .auth-toggle-link:focus-visible::after {
@@ -594,15 +523,10 @@ html {
   .btn-anim::after { display: none; }
   .auth-toggle-link::after { transition: none; }
 
-  /* Honour the OS "reduce motion" setting for hover lifts and tap presses:
-     keep the colour/shadow feedback, drop the movement. */
   .press-effect,
   .scale-on-hover { transition: none; }
   .press-effect:active,
   .scale-on-hover:hover { transform: none; }
   .metrics-container:hover,
   .data-card:hover { transform: none; }
-  .animate-metric-pulse,
-  .animate-data-flow::after,
-  .animate-insight-glow { animation: none; }
 }

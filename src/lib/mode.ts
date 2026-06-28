@@ -4,19 +4,29 @@
  */
 
 export function isDemoMode(): boolean {
-  // Use a simpler, more robust check for environment variables.
-  // We prioritize the presence of ANY of the required Supabase keys.
+  // Server-side check
   const hasServerKeys =
     typeof process !== 'undefined' &&
     process.env &&
     !!process.env.SUPABASE_URL &&
     !!process.env.SUPABASE_ANON_KEY;
 
+  // Client-side (public) check
   const hasPublicKeys =
+    typeof process !== 'undefined' &&
+    process.env &&
     !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
     !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  return !(hasServerKeys || hasPublicKeys);
+  // In Next.js Edge Runtime, process.env might be partially populated.
+  // We also check for global variables that might be injected.
+  const hasGlobalPublicKeys =
+    // @ts-ignore
+    (typeof NEXT_PUBLIC_SUPABASE_URL !== 'undefined' && !!NEXT_PUBLIC_SUPABASE_URL) ||
+    // @ts-ignore
+    (typeof NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'undefined' && !!NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+  return !(hasServerKeys || hasPublicKeys || hasGlobalPublicKeys);
 }
 
 export function isProductionMode(): boolean {
