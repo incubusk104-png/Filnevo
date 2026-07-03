@@ -11,6 +11,9 @@
         "preview": "npm run pages:build && wrangler pages dev",
         "deploy": "npm run pages:build && wrangler pages deploy"
     },
+    "engines": {
+        "node": ">=22"
+    },
     "dependencies": {
         "@21st-sdk/agent": "^0.0.18",
         "@21st-sdk/nextjs": "^0.0.11",
